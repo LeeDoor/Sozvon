@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models
+namespace Server.Models.Data
 {
     public class UserCredential
     {
