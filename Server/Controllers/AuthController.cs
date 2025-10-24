@@ -6,10 +6,7 @@ namespace Server.Controllers
     public class AuthController : Controller
     {
         [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
         [HttpPost]
         public IActionResult RegisterPost()
         {
@@ -17,10 +14,8 @@ namespace Server.Controllers
             return RedirectToAction("Register");
         }
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
+        
         [HttpPost]
         public IActionResult LoginPost()
         {
