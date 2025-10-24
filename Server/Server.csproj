@@ -7,13 +7,25 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Auth\Index.cshtml.cs" />
+    <Compile Remove="Views\Auth\style_login.cs" />
+    <Compile Remove="Views\Auth\style_register.cshtml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="Views\Auth\Index.cshtml" />
     <Content Remove="Views\Auth\Index1.cshtml" />
+    <Content Remove="Views\Auth\style_register.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="Views\Auth\Login.cshmtl" />
     <None Remove="Views\Auth\Register.cshmtl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\login.css" />
+    <None Include="wwwroot\register.css" />
   </ItemGroup>
 
   <ItemGroup>
