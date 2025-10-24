@@ -1,17 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Server.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace Server.Controllers
 {
     public class AuthController : Controller
     {
+        private List<User> _users = new();
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public IActionResult RegisterPost()
+        public IActionResult RegisterPost([Required] User user)
         {
-            Console.WriteLine("RegisterPost has been activated");
-            return RedirectToAction("Register");
+            _users.Add(user);
+
+            return RedirectToAction("Login", new UserCredential { 
+                Login = user.Login, Password = user.Password });
         }
         [HttpGet]
         public IActionResult Login() => View();
