@@ -1,11 +1,16 @@
-﻿namespace Server.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Server.Models
 {
     public class ConferenceRoom
     {
         public int Id { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public string Link {  get; set; }
         public bool IsActive { get; set; }
         public List<User>? Users { get; set; }
+        public List<ChatMessage>? ChatMessages { get; set; }
     }
 }

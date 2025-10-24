@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models
 {
@@ -14,6 +15,9 @@ namespace Server.Models
 
         [Required]
         public string Password { get; set; }
+
+        public int? ConferenceRoomId { get; set; }
+        [ForeignKey(nameof(ConferenceRoomId))]
         public ConferenceRoom? ConferenceRoom { get; set; }
     }
 }
