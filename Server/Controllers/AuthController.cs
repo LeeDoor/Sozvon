@@ -1,5 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.SignalR;
+
+namespace SignalRApp
+{
+    public class ChatHub : Hub
+    {
+        public async Task Send(string message)
+        {
+            await this.Clients.All.SendAsync("Receive", message);
+        }
+    }
+}
+
 
 namespace Server.Controllers
 {
