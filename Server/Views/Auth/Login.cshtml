@@ -1,0 +1,58 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">SoZVOn</div>
+        <div class="subtitle">Вход в вашу учетную запись</div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form method="post">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="Введите ваш email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required placeholder="Введите ваш пароль">
+            </div>
+
+            <button type="submit" class="btn">Войти</button>
+        </form>
+
+        <div class="links">
+            <a href="/Auth/Register">Создать аккаунт</a>
+            <a href="/">На главную</a>
+        </div>
+    </div>
+
+    <script>
+        // Простая клиентская валидация
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (!email || !password) {
+                e.preventDefault();
+                errorMessage.textContent = 'Пожалуйста, заполните все поля';
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
