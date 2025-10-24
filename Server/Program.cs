@@ -19,6 +19,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var app = builder.Build();
 app.UseAuthorization();
 app.UseAuthentication();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
