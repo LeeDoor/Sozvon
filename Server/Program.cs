@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using SignalRApp;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -16,9 +19,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var app = builder.Build();
 app.UseAuthorization();
 app.UseAuthentication();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Register}"
+    pattern: "{controller}/{action}"
 );
+app.MapHub<ChatHub>("/chat");
 
 app.Run();
