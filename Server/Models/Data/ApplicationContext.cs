@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-namespace Server.Models
+namespace Server.Models.Data
 {
     public class ApplicationContext : DbContext
     {
@@ -20,12 +20,12 @@ namespace Server.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Login="Boris", Name="Boris", Password="1234"},
+                new User { Id = 1, Login = "Boris", Name = "Boris", Password = "1234" },
                 new User { Id = 2, Login = "Leonid", Name = "Leonid", Password = "1234" },
                 new User { Id = 3, Login = "Egor", Name = "Egor", Password = "1234" },
                 new User { Id = 4, Login = "Seva", Name = "Seva", Password = "1234" }
                 );
-            modelBuilder.Entity<User>().HasIndex(u=>u.Login).IsUnique();
+            modelBuilder.Entity<User>().HasIndex(u => u.Login).IsUnique();
             modelBuilder.Entity<User>()
                 .HasOne(u => u.ConferenceRoom)
                 .WithMany(c => c.Users)
@@ -37,7 +37,7 @@ namespace Server.Models
                 .HasForeignKey(ch => ch.ConferenceRoomId);
             modelBuilder.Entity<ChatMessage>()
                 .HasOne(ch => ch.User)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(ch => ch.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
