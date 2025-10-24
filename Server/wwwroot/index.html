@@ -1,58 +1,154 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-    <meta charset="utf-8" />
-    <title>Metanit.com</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoZVOn - Видеоконференции</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div>
-        Введите логин:<br />
-        <input id="userName" type="text" /><br /><br />
-        Введите сообщение:<br />
-        <input type="text" id="message" /><br /><br />
-        <input type="button" id="sendBtn" value="Отправить" disabled="disabled" />
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📹</span>
+                    SoZVOn
     </div>
-    <div id="chatroom"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
-    <script>
-        const hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/chat")
-            .build();
+                <nav>
+                    <ul>
+                        <li><a href="#features">Возможности</a></li>
+                        <li><a href="#how-it-works">Как это работает</a></li>
+                        <li><a href="#pricing">Тарифы</a></li>
+                        <li><a href="/Auth/Login" class="btn btn-outline">Войти</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
 
-        document.getElementById("sendBtn").addEventListener("click", function () {
-            const userName = document.getElementById("userName").value;   // получаем введенное имя
-            const message = document.getElementById("message").value;
+    <section class="hero">
+        <div class="container">
+            <h1>Простая и надежная платформа для видеоконференций</h1>
+            <p>Организуйте встречи, презентации и вебинары с высококачественным видео и аудио. Без скачивания, без сложных настроек.</p>
+            <div class="btn-group">
+                <a href="/Auth/Register" class="btn btn-primary btn-large">Начать бесплатно</a>
+                <a href="#features" class="btn btn-outline btn-large">Узнать больше</a>
+            </div>
+        </div>
+    </section>
 
-            hubConnection.invoke("Send", message, userName) // отправка данных серверу
-                .catch(function (err) {
-                    return console.error(err.toString());
-                });
-        });
-        // получение данных с сервера
-        hubConnection.on("Receive", function (message, userName) {
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Почему выбирают SoZVOn</h2>
+                <p>Все необходимое для эффективного онлайн-общения в одном месте</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎥</div>
+                    <h3>HD-видео и аудио</h3>
+                    <p>Кристально чистое качество видео и звука для комфортного общения без задержек и помех.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Безопасность</h3>
+                    <p>Зашифрованные соединения защищают ваши разговоры от посторонних глаз и ушей.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Чат в реальном времени</h3>
+                    <p>Обменивайтесь сообщениями, файлами и ссылками прямо во время видеовстречи.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>До 100 участников</h3>
+                    <p>Приглашайте коллег, партнеров и клиентов — поддерживаем большие онлайн-встречи.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Доступно везде</h3>
+                    <p>Работает на компьютерах, планшетах и смартфонах без установки дополнительного ПО.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Запись встреч</h3>
+                    <p>Сохраняйте важные обсуждения и делитесь ими с теми, кто не смог присутствовать.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            // создаем элемент <b> для имени пользователя
-            const userNameElem = document.createElement("b");
-            userNameElem.textContent = `${userName}: `;
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>Как начать использовать</h2>
+                <p>Всего три простых шага до вашей первой видеоконференции</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Зарегистрируйтесь</h3>
+                    <p>Создайте учетную запись — это займет меньше минуты</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Создайте комнату</h3>
+                    <p>Нажмите одну кнопку, чтобы создать новую видеоконференцию</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Пригласите участников</h3>
+                    <p>Отправьте ссылку коллегам — они смогут присоединиться без регистрации</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            // создает элемент <p> для сообщения пользователя
-            const elem = document.createElement("p");
-            elem.appendChild(userNameElem);
-            elem.appendChild(document.createTextNode(message));
+    <section class="cta">
+        <div class="container">
+            <h2>Готовы начать?</h2>
+            <p>Присоединяйтесь к тысячам пользователей, которые уже проводят встречи с SoZVOn</p>
+            <div class="btn-group">
+                <a href="/Auth/Register" class="btn btn-primary btn-large">Создать аккаунт</a>
+                <a href="/Auth/Login" class="btn btn-outline btn-large">Войти в систему</a>
+            </div>
+        </div>
+    </section>
 
-            // добавляем новый элемент в самое начало
-            // для этого сначала получаем первый элемент
-            const firstElem = document.getElementById("chatroom").firstChild;
-            document.getElementById("chatroom").insertBefore(elem, firstElem);
-        });
-
-        hubConnection.start()
-            .then(function () {
-                document.getElementById("sendBtn").disabled = false;
-            })
-            .catch(function (err) {
-                return console.error(err.toString());
-            });
-    </script>
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>SoZVOn</h3>
+                    <ul>
+                        <li><a href="#features">Возможности</a></li>
+                        <li><a href="#how-it-works">Как это работает</a></li>
+                        <li><a href="#pricing">Тарифы</a></li>
+                        <li><a href="#">О нас</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Поддержка</h3>
+                    <ul>
+                        <li><a href="#">Центр помощи</a></li>
+                        <li><a href="#">Связаться с нами</a></li>
+                        <li><a href="#">Сообщить о проблеме</a></li>
+                        <li><a href="#">Статус системы</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Правовая информация</h3>
+                    <ul>
+                        <li><a href="#">Условия использования</a></li>
+                        <li><a href="#">Политика конфиденциальности</a></li>
+                        <li><a href="#">Политика использования файлов cookie</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 SoZVOn. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
