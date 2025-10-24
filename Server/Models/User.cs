@@ -5,7 +5,7 @@ namespace Server.Models
 {
     public class User
     {
-        public int Id { get; set; }
+        public UserId Id { get; set; }
 
         [Required]
         public string Login {  get; set; }
@@ -16,7 +16,7 @@ namespace Server.Models
         [Required]
         public string Password { get; set; }
 
-        public int? ConferenceRoomId { get; set; }
+        public ConferenceRoomId? ConferenceRoomId { get; set; }
         [ForeignKey(nameof(ConferenceRoomId))]
         public ConferenceRoom? ConferenceRoom { get; set; }
     }

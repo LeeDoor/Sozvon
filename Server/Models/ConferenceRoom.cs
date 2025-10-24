@@ -2,9 +2,10 @@
 
 namespace Server.Models
 {
+
     public class ConferenceRoom
     {
-        public int Id { get; set; }
+        public ConferenceRoomId Id { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]
