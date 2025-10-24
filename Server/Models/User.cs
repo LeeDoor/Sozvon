@@ -7,7 +7,7 @@ namespace Server.Models
         public int Id { get; set; }
 
         [Required]
-        public string Login {  get; set; }
+        public string Login { get; set; }
 
         [Required]
         public string Name {  get; set; }
