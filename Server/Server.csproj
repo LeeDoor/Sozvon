@@ -24,11 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\login.css" />
-    <None Include="wwwroot\register.css" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.10" />
     <Folder Include="Models\" />
   </ItemGroup>

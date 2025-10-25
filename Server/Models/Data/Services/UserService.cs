@@ -6,16 +6,14 @@ namespace Server.Models.Data.Services
     {
         private readonly ApplicationContext _context;
 
-        public UserService(ApplicationContext context)
+        public UserService()
         {
-            _context = context;
+            _context = new();
         }
-        public async Task<User> CreateUserAsync(string login, string password, string name)
+        public async Task CreateUserAsync(User user)
         {
-            var user = new User { Login = login, Password = password, Name = name };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            return user;
         }
         public async Task<User?> GetUserByIdAsync(UserId id)
         {
@@ -25,10 +23,10 @@ namespace Server.Models.Data.Services
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Login == login);
         }
-        public async Task<bool> ValidateUserAsync(string login, string password)
+        public async Task<bool> ValidateUserAsync(UserCredential userCredential)
         {
             return await _context.Users
-                .AnyAsync(u => u.Login == login && u.Password == password);
+                .AnyAsync(u => u.Login == userCredential.Login && u.Password == userCredential.Password);
         }
     }
 }

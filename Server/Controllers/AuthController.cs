@@ -3,14 +3,23 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
 using Server.Models.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System;
+using System.Data;
+using Microsoft.AspNetCore.Authorization;
+using Server.Models.Data.Services;
 
 namespace SignalRApp
 {
     public class ChatHub : Hub
     {
+
+        [Authorize]
         public async Task Send(string message)
         {
-            await this.Clients.All.SendAsync("Receive", message);
+            await Clients.All.SendAsync("Receive", $"{Context.User.Identity.Name}: {message}");
         }
     public override async Task OnConnectedAsync()
         {
@@ -19,12 +28,21 @@ namespace SignalRApp
         }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            
             await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} покинул в чат");
             await base.OnDisconnectedAsync(exception);
         }
     }
 }
 
+namespace Server.Controllers
+{
+    public class ChatController : Controller
+    {
+        [HttpGet]
+        public IActionResult Index() => View();
+    }
+}
 
 namespace Server.Controllers
 {
@@ -34,21 +52,32 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public IActionResult RegisterPost([Required] User user)
+        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
-            _users.Add(user);
-
-            return RedirectToAction("Login", new UserCredential { 
-                Login = user.Login, Password = user.Password });
+            await userService.CreateUserAsync(user);
+            return RedirectToAction("Login");
         }
         [HttpGet]
         public IActionResult Login() => View();
         
         [HttpPost]
-        public IActionResult LoginPost()
+        public async Task<IActionResult> LoginPost(
+            UserService userService, string? returnUrl, 
+            [Required][FromBody] UserCredential userCredential)
         {
-            Console.WriteLine("LoginPost has been activated");
-            return RedirectToAction("Login");
+            if (!await userService.ValidateUserAsync(userCredential))
+                return Unauthorized();
+            if (userCredential is null) return Unauthorized();
+            var claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, userCredential.Login)
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+            if (returnUrl is not null)
+                return LocalRedirect(returnUrl);
+
+            return Redirect("/");
         }
     }
 }

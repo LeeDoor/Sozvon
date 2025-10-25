@@ -1,17 +1,10 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="~/login.css">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
     <div class="login-container">
@@ -20,7 +13,7 @@
 
         <div class="error-message" id="errorMessage"></div>
 
-        <form method="post">
+        <form id="loginForm">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required placeholder="Введите ваш email">
@@ -31,7 +24,7 @@
                 <input type="password" id="password" name="password" required placeholder="Введите ваш пароль">
             </div>
 
-            <button type="submit" class="btn">Войти</button>
+            <button type="submit" class="btn" id="submitButton">Войти</button>
         </form>
 
         <div class="links">
@@ -41,18 +34,59 @@
     </div>
 
     <script>
-        // Простая клиентская валидация
-        document.querySelector('form').addEventListener('submit', function(e) {
+        document.getElementById('submitButton').addEventListener('click', function(e) {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
 
             if (!email || !password) {
-                e.preventDefault();
                 errorMessage.textContent = 'Пожалуйста, заполните все поля';
                 errorMessage.style.display = 'block';
+                return;
             }
+
+            fetch('/Auth/LoginPost', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    login: email,
+                    password: password
+                })
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    return response.json().then(data => {
+                        console.log('Вход успешен:', data);
+                        // Если сервер возвращает URL для редиректа
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            window.location.href = '/'; // На главную по умолчанию
+                        }
+                    });
+                } else {
+                    // Обработка ошибок сервера
+                    return response.json().then(data => {
+                        errorMessage.textContent = data.message || 'Ошибка входа';
+                        errorMessage.style.display = 'block';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                errorMessage.textContent = 'Произошла ошибка при входе';
+                errorMessage.style.display = 'block';
+            });
         });
     </script>
+
+    <!-- Visual Studio Browser Link -->
+    <script type="text/javascript" src="/_vs/browserLink" async="async" id="__browserLink_initializationData" data-requestId="8534a0c68c8041b1976f94b90fe0ed0f" data-requestMappingFromServer="false" data-connectUrl="http://localhost:50337/1dda40436e0b4221a28ca3481c31dcd9/browserLink"></script>
+    <!-- End Browser Link -->
+    <script src="/_framework/aspnetcore-browser-refresh.js"></script>
 </body>
 </html>

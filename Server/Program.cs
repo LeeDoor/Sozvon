@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-
+using Server.Models.Data.Services;
 using SignalRApp;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +15,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/";
         options.SlidingExpiration = true;
     });
+builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 app.UseAuthorization();
@@ -25,6 +26,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
 );
-app.MapHub<ChatHub>("/chat");
+app.MapHub<ChatHub>("/chatpost");
 
 app.Run();

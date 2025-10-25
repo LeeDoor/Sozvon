@@ -19,12 +19,12 @@ namespace Server.Models.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Login = "Boris", Name = "Boris", Password = "1234" },
-                new User { Id = 2, Login = "Leonid", Name = "Leonid", Password = "1234" },
-                new User { Id = 3, Login = "Egor", Name = "Egor", Password = "1234" },
-                new User { Id = 4, Login = "Seva", Name = "Seva", Password = "1234" }
-                );
+            //modelBuilder.Entity<User>().HasData(
+            //    new User { Id = 1, Login = "Boris", Name = "Boris", Password = "1234" },
+            //    new User { Id = 2, Login = "Leonid", Name = "Leonid", Password = "1234" },
+            //    new User { Id = 3, Login = "Egor", Name = "Egor", Password = "1234" },
+            //    new User { Id = 4, Login = "Seva", Name = "Seva", Password = "1234" }
+            //    );
             modelBuilder.Entity<User>().HasIndex(u => u.Login).IsUnique();
             modelBuilder.Entity<User>()
                 .HasOne(u => u.ConferenceRoom)
