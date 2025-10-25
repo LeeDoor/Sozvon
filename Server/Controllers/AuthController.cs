@@ -8,13 +8,21 @@ namespace SignalRApp
 {
     public class ChatHub : Hub
     {
-        public async Task Send(string message)
+        public async Task Send(string message, string userName)
         {
-            await this.Clients.All.SendAsync("Receive", message);
+            await this.Clients.All.SendAsync("Receive", message, userName);
         }
     }
 }
 
+namespace Server.Controllers
+{
+    public class ChatController : Controller
+    {
+        [HttpGet]
+        public IActionResult Index() => View();
+    }
+}
 
 namespace Server.Controllers
 {
