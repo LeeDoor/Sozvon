@@ -3,6 +3,11 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
 using Server.Models.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System;
+using System.Data;
 
 namespace SignalRApp
 {
@@ -10,7 +15,8 @@ namespace SignalRApp
     {
         public async Task Send(string message)
         {
-            await this.Clients.All.SendAsync("Receive", message);
+            
+            await Clients.All.SendAsync("Receive", message);
         }
     }
 }
@@ -26,19 +32,30 @@ namespace Server.Controllers
         [HttpPost]
         public IActionResult RegisterPost([Required] User user)
         {
-            _users.Add(user);
-
-            return RedirectToAction("Login", new UserCredential { 
-                Login = user.Login, Password = user.Password });
+            _users.Add(new User()
+            {
+                Login = user.Login,
+                Name = user.Name,
+                Password = user.Password
+            });
+            return RedirectToAction("Login");
         }
         [HttpGet]
         public IActionResult Login() => View();
         
         [HttpPost]
-        public IActionResult LoginPost()
+        public async Task<IActionResult> LoginPost(string? returnUrl, [Required] User user)
         {
-            Console.WriteLine("LoginPost has been activated");
-            return RedirectToAction("Login");
+            if (user is null) return Unauthorized();
+            var claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, user.Login)
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+            if (returnUrl is not null)
+                return LocalRedirect(returnUrl);
+            return Redirect("/");
         }
     }
 }
