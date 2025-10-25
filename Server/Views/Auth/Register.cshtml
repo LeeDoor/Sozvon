@@ -1,12 +1,133 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My HTML Stub Page</title>
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/register.css">
 </head>
 <body>
-    <h1>Welcome to My Page</h1>
-    <p>RegisterRegisterRegisterRegisterRegister</p>
+    <div class="register-container">
+        <div class="logo">SoZVOn</div>
+        <div class="subtitle">Создание новой учетной записи</div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form method="post">
+            <div class="form-group">
+                <label for="login">Логин</label>
+                <input type="text" id="login" name="login" required placeholder="Введите логин">
+            </div>
+
+            <div class="form-group">
+                <label for="fullName">Полное имя</label>
+                <input type="text" id="fullName" name="fullName" required placeholder="Введите ваше полное имя">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required placeholder="Создайте пароль">
+                <div class="password-requirements">Минимум 8 символов, включая цифры и буквы</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Подтверждение пароля</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Повторите пароль">
+            </div>
+
+            <button type="submit" class="btn">Зарегистрироваться</button>
+        </form>
+
+        <div class="links">
+            <a href="/Auth/Login">Уже есть аккаунт?</a>
+            <a href="/">На главную</a>
+        </div>
+    </div>
+
+    <script>
+        // Структура пользователя в JavaScript, соответствующая C# модели
+        class User {
+            constructor(login, name, password) {
+                this.login = login;
+                this.name = name;
+                this.password = password;
+                // Id и ConferenceRoom будут установлены на сервере
+                this.id = 0;
+                this.conferenceRoom = null;
+            }
+        }
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+
+            const login = document.getElementById('login').value;
+            const fullName = document.getElementById('fullName').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Сброс сообщения об ошибке
+            errorMessage.style.display = 'none';
+
+            // Валидация
+            if (!login || !fullName || !password || !confirmPassword) {
+                errorMessage.textContent = 'Пожалуйста, заполните все поля';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Пароли не совпадают';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 8) {
+                errorMessage.textContent = 'Пароль должен содержать минимум 8 символов';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // Создаем объект пользователя по структуре C# модели
+            const userData = new User(login, fullName, password);
+
+            // Отправляем данные на сервер
+            fetch('/Auth/RegisterPost', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Если сервер вернул редирект
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    // Если ответ успешный, но без редиректа
+                    return response.json().then(data => {
+                        // Обработка успешного ответа
+                        console.log('Регистрация успешна:', data);
+                        window.location.href = '/Auth/Login'; // Перенаправляем на страницу входа
+                    });
+                } else {
+                    // Обработка ошибок HTTP
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Ошибка регистрации');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                errorMessage.textContent = error.message || 'Произошла ошибка при регистрации';
+                errorMessage.style.display = 'block';
+            });
+        });
+    </script>
 </body>
 </html>
