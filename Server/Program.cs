@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Server.Models.Data.Services;
 using SignalRApp;
+using Server.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -26,7 +27,15 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
 );
-app.MapHub<ChatHub>("/chat");
 app.MapHub<WebRTCHub>("/webrtchub");
+app.MapHub<ChatHub>("/chat");
 
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapFallback(async context =>
+{
+    context.Response.Redirect("/VideoCall");
+});
 app.Run();

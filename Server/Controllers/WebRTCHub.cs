@@ -1,37 +1,54 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
 
-namespace SignalRApp
+namespace Server.Hubs
 {
     public class WebRTCHub : Hub
     {
-        public async Task JoinCall(string userId)
+        private static readonly ConcurrentDictionary<string, string> _rooms = new();
+
+        public async Task JoinRoom(string roomId)
         {
-            await Clients.Others.SendAsync("UserJoined", userId);
+            // Удаляем из предыдущих комнат
+            var previousRoom = _rooms.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            if (previousRoom != null)
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, previousRoom);
+                await Clients.OthersInGroup(previousRoom).SendAsync("UserLeft", Context.ConnectionId);
+            }
+
+            // Добавляем в новую комнату
+            _rooms[roomId] = Context.ConnectionId;
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+
+            // Получаем список пользователей в комнате
+            var usersInRoom = _rooms.Where(x => x.Key == roomId && x.Value != Context.ConnectionId)
+                                   .Select(x => x.Value)
+                                   .ToList();
+
+            await Clients.Caller.SendAsync("ExistingUsers", usersInRoom);
+            await Clients.OthersInGroup(roomId).SendAsync("UserJoined", Context.ConnectionId);
         }
 
-        public async Task SendOffer(string targetUserId, string offer)
+        public async Task SendSignal(string targetUserId, object signal)
         {
-            await Clients.User(targetUserId).SendAsync("ReceiveOffer", Context.ConnectionId, offer);
-        }
-
-        public async Task SendAnswer(string targetUserId, string answer)
-        {
-            await Clients.User(targetUserId).SendAsync("ReceiveAnswer", Context.ConnectionId, answer);
-        }
-
-        public async Task SendIceCandidate(string targetUserId, string candidate)
-        {
-            await Clients.User(targetUserId).SendAsync("ReceiveIceCandidate", Context.ConnectionId, candidate);
-        }
-
-        public async Task LeaveCall()
-        {
-            await Clients.Others.SendAsync("UserLeft", Context.ConnectionId);
+            await Clients.Client(targetUserId).SendAsync("ReceiveSignal", new
+            {
+                SenderId = Context.ConnectionId,
+                Signal = signal
+            });
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            await Clients.Others.SendAsync("UserLeft", Context.ConnectionId);
+            // Удаляем при отключении
+            var room = _rooms.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            if (room != null)
+            {
+                _rooms.TryRemove(room, out _);
+                await Clients.OthersInGroup(room).SendAsync("UserLeft", Context.ConnectionId);
+            }
+
             await base.OnDisconnectedAsync(exception);
         }
     }
