@@ -35,11 +35,11 @@
 
     <script>
         document.getElementById('submitButton').addEventListener('click', function(e) {
-            const email = document.getElementById('email').value;
+            const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
 
-            if (!email || !password) {
+            if (!login || !password) {
                 errorMessage.textContent = 'Пожалуйста, заполните все поля';
                 errorMessage.style.display = 'block';
                 return;
@@ -51,7 +51,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    login: email,
+                    login: login,
                     password: password
                 })
             })
