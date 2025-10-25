@@ -8,15 +8,17 @@ using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using System;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
+using Server.Models.Data.Services;
 
 namespace SignalRApp
 {
     public class ChatHub : Hub
     {
+        [Authorize]
         public async Task Send(string message)
         {
-            
-            await Clients.All.SendAsync("Receive", message);
+            await Clients.All.SendAsync("Receive", $"{Context.User.Identity.Name}: {message}");
         }
     public override async Task OnConnectedAsync()
         {
@@ -25,6 +27,7 @@ namespace SignalRApp
         }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            
             await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} покинул в чат");
             await base.OnDisconnectedAsync(exception);
         }
@@ -40,31 +43,31 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public IActionResult RegisterPost([Required] User user)
+        public async Task<IActionResult> RegisterPost(UserService userService, [Required] User user)
         {
-            _users.Add(new User()
-            {
-                Login = user.Login,
-                Name = user.Name,
-                Password = user.Password
-            });
+            await userService.CreateUserAsync(user);
             return RedirectToAction("Login");
         }
         [HttpGet]
         public IActionResult Login() => View();
         
         [HttpPost]
-        public async Task<IActionResult> LoginPost(string? returnUrl, [Required] User user)
+        public async Task<IActionResult> LoginPost(
+            UserService userService, string? returnUrl, 
+            [Required] UserCredential userCredential)
         {
-            if (user is null) return Unauthorized();
+            if (!await userService.ValidateUserAsync(userCredential))
+                return Unauthorized();
+            if (userCredential is null) return Unauthorized();
             var claims = new List<Claim> {
-                new Claim(ClaimTypes.Name, user.Login)
+                new Claim(ClaimTypes.Name, userCredential.Login)
             };
             var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
             if (returnUrl is not null)
                 return LocalRedirect(returnUrl);
+
             return Redirect("/");
         }
     }
