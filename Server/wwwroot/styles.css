@@ -53,9 +53,7 @@ nav ul {
 
     nav ul li {
         margin-left: 20px;
-        text-align: center;
-        height: 40px; 
-        line-height: 40px; 
+        align-content: center;
     }
 
         nav ul li a {
@@ -340,5 +338,89 @@ footer {
     .steps {
         flex-direction: column;
         gap: 40px;
+    }
+    
+}
+/* Стили для блока разработчиков */
+.developers-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #444;
+}
+
+    .developers-section h3 {
+        color: #ddd;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 24px;
+    }
+
+.developers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.developer-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+    .developer-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+.developer-avatar {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.developer-card h4 {
+    color: white;
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+.developer-card p {
+    color: #aaa;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.developer-links {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.developer-link {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    border: 1px solid #667eea;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+    .developer-link:hover {
+        background: #667eea;
+        color: white;
+    }
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .developers-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .developer-card {
+        padding: 15px;
     }
 }
