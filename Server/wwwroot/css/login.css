@@ -43,7 +43,7 @@ label {
     font-weight: 500;
 }
 
-input[type="email"],
+input[type="login"],
 input[type="password"] {
     width: 100%;
     padding: 12px;
@@ -54,7 +54,7 @@ input[type="password"] {
     box-sizing: border-box;
 }
 
-    input[type="email"]:focus,
+    input[type="login"]:focus,
     input[type="password"]:focus {
         outline: none;
         border-color: #667eea;

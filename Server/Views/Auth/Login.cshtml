@@ -15,8 +15,8 @@
 
         <form id="loginForm">
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="Введите ваш email">
+                <label for="login">Login</label>
+                <input type="login" id="login" name="login" required placeholder="Введите ваш login">
             </div>
 
             <div class="form-group">
@@ -35,7 +35,7 @@
 
     <script>
         document.getElementById('submitButton').addEventListener('click', function(e) {
-            const email = document.getElementById('email').value;
+            const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
 
