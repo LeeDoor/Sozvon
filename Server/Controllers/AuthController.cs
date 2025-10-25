@@ -15,6 +15,7 @@ namespace SignalRApp
 {
     public class ChatHub : Hub
     {
+
         [Authorize]
         public async Task Send(string message)
         {
@@ -34,6 +35,14 @@ namespace SignalRApp
     }
 }
 
+namespace Server.Controllers
+{
+    public class ChatController : Controller
+    {
+        [HttpGet]
+        public IActionResult Index() => View();
+    }
+}
 
 namespace Server.Controllers
 {
