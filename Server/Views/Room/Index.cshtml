@@ -27,7 +27,6 @@
             </div>
             <div id="chatroom"></div>
             <div class="input-container">
-                <input type="text" id="userName" placeholder="Ваше имя" />
                 <input type="text" id="message" placeholder="Введите сообщение..." />
                 <button id="sendBtn" disabled>Отправить</button>
             </div>
@@ -52,12 +51,7 @@
         chatroom.scrollTop = chatroom.scrollHeight;
     }
     document.getElementById("sendBtn").addEventListener("click", function () {
-        const userName = document.getElementById("userName").value;
         const message = document.getElementById("message").value;
-        if (!userName.trim()) {
-            alert("Пожалуйста, введите ваше имя");
-            return;
-        }
         if (!message.trim()) {
             alert("Пожалуйста, введите сообщение");
             return;
@@ -74,14 +68,11 @@
         }
     });
     hubConnection.on("Receive", function (message, userName) {
-        const currentUserName = document.getElementById("userName").value;
+        //const currentUserName = document.getElementById("userName").value; - Требуется подправить
+        const currentUserName = NaN //Затычка
         const isOwnMessage = userName === currentUserName;
         
         addMessage(userName, message, isOwnMessage);
-    });
-    document.getElementById("userName").addEventListener("input", function() {
-        const userName = this.value.trim();
-        const sendBtn = document.getElementById("sendBtn");
     });
     hubConnection.start()
         .then(function () {
