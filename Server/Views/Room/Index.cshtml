@@ -1,6 +1,6 @@
 ﻿@model string
 @{
-    ViewBag.UserName = Model;
+    ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
 }
 <!DOCTYPE html>
 <html>
@@ -41,7 +41,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
 <script>
-    const username = NaN; //Затычка
+    const username = '@(ViewBag.UserName)';
     const hubConnection = new signalR.HubConnectionBuilder()
         .withUrl("/chat")
         .build();
@@ -75,8 +75,7 @@
         }
     });
     hubConnection.on("Receive", function (message, userName) {
-        //const currentUserName = document.getElementById("userName").value; - Требуется подправить
-        const currentUserName = NaN //Затычка
+        const currentUserName = '@(ViewBag.UserName)';
         const isOwnMessage = userName === currentUserName;
         
         addMessage(userName, message, isOwnMessage);
