@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
 using Server.Models.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -10,38 +9,6 @@ using System;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using Server.Models.Data.Services;
-
-namespace SignalRApp
-{
-    public class ChatHub : Hub
-    {
-        public async Task Send(string message)
-        {
-            await Clients.All.SendAsync("Receive", message, Context.User.Identity.Name);
-        }
-    public override async Task OnConnectedAsync()
-        {
-            await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} вошел в чат");
-            await base.OnConnectedAsync();
-        }
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            
-            await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} покинул в чат");
-            await base.OnDisconnectedAsync(exception);
-        }
-    }
-}
-
-namespace Server.Controllers
-{
-    public class ChatController : Controller
-    {
-        [HttpGet]
-        public IActionResult Index() => View();
-    }
-}
-
 namespace Server.Controllers
 {
     public class AuthController : Controller

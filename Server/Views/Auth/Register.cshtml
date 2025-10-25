@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>Регистрация</title>
     <link rel="stylesheet" href="~/css/register.css">
 </head>
 <body>
@@ -46,53 +46,40 @@
     </div>
 
     <script>
-        // Структура пользователя в JavaScript, соответствующая C# модели
         class User {
             constructor(login, name, password) {
                 this.login = login;
                 this.name = name;
                 this.password = password;
-                // Id и ConferenceRoom будут установлены на сервере
                 this.id = 0;
                 this.conferenceRoom = null;
             }
         }
 
         document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Предотвращаем стандартную отправку формы
-
+            e.preventDefault();
             const login = document.getElementById('login').value;
             const fullName = document.getElementById('fullName').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const errorMessage = document.getElementById('errorMessage');
-
-            // Сброс сообщения об ошибке
             errorMessage.style.display = 'none';
-
-            // Валидация
             if (!login || !fullName || !password || !confirmPassword) {
                 errorMessage.textContent = 'Пожалуйста, заполните все поля';
                 errorMessage.style.display = 'block';
                 return;
             }
-
             if (password !== confirmPassword) {
                 errorMessage.textContent = 'Пароли не совпадают';
                 errorMessage.style.display = 'block';
                 return;
             }
-
             if (password.length < 8) {
                 errorMessage.textContent = 'Пароль должен содержать минимум 8 символов';
                 errorMessage.style.display = 'block';
                 return;
             }
-
-            // Создаем объект пользователя по структуре C# модели
             const userData = new User(login, fullName, password);
-
-            // Отправляем данные на сервер
             fetch('/Auth/RegisterPost', {
                 method: 'POST',
                 headers: {
@@ -102,17 +89,13 @@
             })
             .then(response => {
                 if (response.redirected) {
-                    // Если сервер вернул редирект
                     window.location.href = response.url;
                 } else if (response.ok) {
-                    // Если ответ успешный, но без редиректа
                     return response.json().then(data => {
-                        // Обработка успешного ответа
                         console.log('Регистрация успешна:', data);
-                        window.location.href = '/Auth/Login'; // Перенаправляем на страницу входа
+                        window.location.href = '/Auth/Login';
                     });
                 } else {
-                    // Обработка ошибок HTTP
                     return response.json().then(errorData => {
                         throw new Error(errorData.message || 'Ошибка регистрации');
                     });
