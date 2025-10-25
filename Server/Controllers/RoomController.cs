@@ -7,5 +7,7 @@ namespace Server.Controllers
     {
         [HttpGet]
         public IActionResult Index() => View();
+        [HttpGet]
+        public IActionResult Stream() => View();
     }
 }
