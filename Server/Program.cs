@@ -20,6 +20,8 @@ builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 app.UseAuthorization();
+app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -38,4 +40,6 @@ app.MapFallback(async context =>
 {
     context.Response.Redirect("/VideoCall");
 });
+
+
 app.Run();
