@@ -52,7 +52,7 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public async Task<IActionResult> RegisterPost(UserService userService, [Required] User user)
+        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
             await userService.CreateUserAsync(user);
             return RedirectToAction("Login");
@@ -63,7 +63,7 @@ namespace Server.Controllers
         [HttpPost]
         public async Task<IActionResult> LoginPost(
             UserService userService, string? returnUrl, 
-            [Required] UserCredential userCredential)
+            [Required][FromBody] UserCredential userCredential)
         {
             if (!await userService.ValidateUserAsync(userCredential))
                 return Unauthorized();
