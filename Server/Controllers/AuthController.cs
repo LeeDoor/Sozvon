@@ -17,32 +17,21 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
+        public IActionResult RegisterPost([Required] User user)
         {
-            await userService.CreateUserAsync(user);
-            return RedirectToAction("Login");
+            _users.Add(user);
+
+            return RedirectToAction("Login", new UserCredential { 
+                Login = user.Login, Password = user.Password });
         }
         [HttpGet]
         public IActionResult Login() => View();
         
         [HttpPost]
-        public async Task<IActionResult> LoginPost(
-            UserService userService, string? returnUrl, 
-            [Required][FromBody] UserCredential userCredential)
+        public IActionResult LoginPost()
         {
-            if (!await userService.ValidateUserAsync(userCredential))
-                return Unauthorized();
-            if (userCredential is null) return Unauthorized();
-            var claims = new List<Claim> {
-                new Claim(ClaimTypes.Name, userCredential.Login)
-            };
-            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
-            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-            if (returnUrl is not null)
-                return LocalRedirect(returnUrl);
-
-            return Redirect("/");
+            Console.WriteLine("LoginPost has been activated");
+            return RedirectToAction("Login");
         }
     }
 }
