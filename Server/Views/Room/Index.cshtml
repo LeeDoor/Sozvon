@@ -1,0 +1,361 @@
+﻿@model string
+@{
+    ViewBag.UserName = Model;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Video Conference - Чат</title>
+    <link rel="stylesheet" href="~/css/chat.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="video-container">
+            <video id="localVideo" autoplay muted></video>
+            <div class="video-placeholder">
+                <h2>Видеоконференция</h2>
+                <p>Здесь будет отображаться видео участников</p>
+            </div>
+            <div class="video-controls">
+                <button class="control-btn" id="startCall">START CALL</button>
+                <button class="control-btn" id="shareScreen">Share Screen</button>
+                <button class="control-btn" id="stopScreen">Stop Screen</button>
+                <button class="control-btn" id="leaveCall" style="background: #e74c3c;">Leave</button>
+            </div>
+        </div>
+        <div class="chat-container">
+            <div class="chat-header">
+                💬 Чат конференции
+            </div>
+            <div class="participants">
+                Участников онлайн: <span id="participantCount">1</span>
+            </div>
+            <div id="chatroom"></div>
+            <div class="input-container">
+                <input type="text" id="message" placeholder="Введите сообщение..." />
+                <button id="sendBtn" disabled>Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+<script>
+    const username = @ViewBag.UserName;
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/chat")
+        .build();
+    function addMessage(userName, message, isOwn = false) {
+        const messageElement = document.createElement("div");
+        messageElement.className = `message ${isOwn ? 'sent' : 'received'}`;
+        const userNameElement = document.createElement("b");
+        userNameElement.textContent = `${userName}:`;
+        const textElement = document.createTextNode(message);
+        messageElement.appendChild(userNameElement);
+        messageElement.appendChild(textElement);
+        const chatroom = document.getElementById("chatroom");
+        chatroom.appendChild(messageElement);
+        chatroom.scrollTop = chatroom.scrollHeight;
+    }
+    document.getElementById("sendBtn").addEventListener("click", function () {
+        const message = document.getElementById("message").value;
+        if (!message.trim()) {
+            alert("Пожалуйста, введите сообщение");
+            return;
+        }
+        hubConnection.invoke("Send", message)
+            .catch(function (err) {
+                console.error(err.toString());
+            });
+        document.getElementById("message").value = '';
+    });
+    document.getElementById("message").addEventListener("keypress", function (e) {
+        if (e.key === 'Enter') {
+            document.getElementById("sendBtn").click();
+        }
+    });
+    hubConnection.on("Receive", function (message, userName) {
+        //const currentUserName = document.getElementById("userName").value; - Требуется подправить
+        const currentUserName = NaN //Затычка
+        const isOwnMessage = userName === currentUserName;
+        
+        addMessage(userName, message, isOwnMessage);
+    });
+    hubConnection.start()
+        .then(function () {
+            document.getElementById("sendBtn").disabled = false;
+        }) 
+        .catch(function (err) {
+            console.error(err.toString());
+        });
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/webrtchub")
+            .build();
+
+        const peerConnections = {};
+        const localVideo = document.getElementById('localVideo');
+        const videoContainer = document.getElementById('video-container');
+        let localStream = null;
+        let screenStream = null;
+        let userId = generateUserId();
+
+        // Generate unique user ID
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Initialize SignalR connection
+        async function startConnection() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected");
+
+                // Join the call
+                await connection.invoke("JoinCall", userId);
+            } catch (err) {
+                console.error(err);
+                setTimeout(startConnection, 5000);
+            }
+        }
+
+        // Initialize WebRTC
+        async function initializeWebRTC() {
+            try {
+                // Get user media (camera and microphone)
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                localVideo.srcObject = localStream;
+
+                // Listen for new users joining
+                connection.on("UserJoined", async (newUserId) => {
+                    await createPeerConnection(newUserId);
+                });
+
+                // Handle incoming offers
+                connection.on("ReceiveOffer", async (fromUserId, offer) => {
+                    await handleOffer(fromUserId, offer);
+                });
+
+                // Handle incoming answers
+                connection.on("ReceiveAnswer", async (fromUserId, answer) => {
+                    await handleAnswer(fromUserId, answer);
+                });
+
+                // Handle ICE candidates
+                connection.on("ReceiveIceCandidate", async (fromUserId, candidate) => {
+                    await handleIceCandidate(fromUserId, candidate);
+                });
+
+                // Handle user leaving
+                connection.on("UserLeft", (leftUserId) => {
+                    if (peerConnections[leftUserId]) {
+                        peerConnections[leftUserId].close();
+                        delete peerConnections[leftUserId];
+                    }
+                    const videoElement = document.getElementById(`video-${leftUserId}`);
+                    if (videoElement) {
+                        videoElement.remove();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error accessing media devices:", error);
+            }
+        }
+
+        // Create peer connection
+        async function createPeerConnection(targetUserId) {
+            const configuration = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' }
+                ]
+            };
+
+            const peerConnection = new RTCPeerConnection(configuration);
+            peerConnections[targetUserId] = peerConnection;
+
+            // Add local stream tracks
+            const currentStream = screenStream || localStream;
+            currentStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, currentStream);
+            });
+
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    connection.invoke("SendIceCandidate", targetUserId, JSON.stringify(event.candidate));
+                }
+            };
+
+            // Handle remote stream
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.createElement('video');
+                remoteVideo.id = `video-${targetUserId}`;
+                remoteVideo.autoplay = true;
+                remoteVideo.playsInline = true;
+                remoteVideo.srcObject = event.streams[0];
+                videoContainer.appendChild(remoteVideo);
+            };
+
+            // Create and send offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            await connection.invoke("SendOffer", targetUserId, JSON.stringify(offer));
+        }
+
+        // Handle incoming offer
+        async function handleOffer(fromUserId, offer) {
+            if (!peerConnections[fromUserId]) {
+                await createPeerConnection(fromUserId);
+            }
+
+            const peerConnection = peerConnections[fromUserId];
+            await peerConnection.setRemoteDescription(JSON.parse(offer));
+
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            await connection.invoke("SendAnswer", fromUserId, JSON.stringify(answer));
+        }
+
+        // Handle incoming answer
+        async function handleAnswer(fromUserId, answer) {
+            const peerConnection = peerConnections[fromUserId];
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(JSON.parse(answer));
+            }
+        }
+
+        // Handle ICE candidate
+        async function handleIceCandidate(fromUserId, candidate) {
+            const peerConnection = peerConnections[fromUserId];
+            if (peerConnection) {
+                await peerConnection.addIceCandidate(JSON.parse(candidate));
+            }
+        }
+
+        // Share screen function
+                // Share screen function
+        async function shareScreen() {
+            try {
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+
+                // Replace local video with screen share
+                localVideo.srcObject = screenStream;
+
+                // Update all peer connections with new stream and renegotiate
+                await updateAllPeerConnectionsWithNewStream(screenStream);
+
+                // Handle screen sharing stop when user clicks browser's stop button
+                screenStream.getTracks().forEach(track => {
+                    track.onended = () => {
+                        stopScreenShare();
+                    };
+                });
+
+            } catch (error) {
+                console.error("Error sharing screen:", error);
+            }
+        }
+
+        // Stop screen sharing
+                async function stopScreenShare() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+                localVideo.srcObject = localStream;
+
+                // Switch back to camera for all peer connections and renegotiate
+                await updateAllPeerConnectionsWithNewStream(localStream);
+            }
+        }
+
+        // Leave call
+        function leaveCall() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+
+            Object.keys(peerConnections).forEach(userId => {
+                peerConnections[userId].close();
+            });
+
+            connection.invoke("LeaveCall");
+            window.location.reload();
+        }
+                async function updateAllPeerConnectionsWithNewStream(newStream) {
+            const userIds = Object.keys(peerConnections);
+
+            for (const userId of userIds) {
+                await updatePeerConnectionWithNewStream(userId, newStream);
+            }
+        }
+
+        // Update a single peer connection with new stream and renegotiate
+        async function updatePeerConnectionWithNewStream(targetUserId, newStream) {
+            const peerConnection = peerConnections[targetUserId];
+            if (!peerConnection) return;
+
+            // Remove all video tracks
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(sender =>
+                sender.track && sender.track.kind === 'video'
+            );
+
+            if (videoSender) {
+                await videoSender.replaceTrack(newStream.getVideoTracks()[0]);
+            } else {
+                // If no video sender exists, add one
+                const videoTrack = newStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    peerConnection.addTrack(videoTrack, newStream);
+                }
+            }
+
+            // For audio tracks (optional - you might want to keep original audio)
+            const audioSender = senders.find(sender =>
+                sender.track && sender.track.kind === 'audio'
+            );
+
+            if (audioSender && newStream.getAudioTracks().length > 0) {
+                await audioSender.replaceTrack(newStream.getAudioTracks()[0]);
+            }
+
+            // Only create new offer if we're the initiator
+            // In a production app, you'd track who initiated the connection
+            if (peerConnection.localDescription && peerConnection.localDescription.type === 'offer') {
+                await renegotiateConnection(targetUserId);
+            }
+        }
+
+        // Renegotiate the connection by creating a new offer
+        async function renegotiateConnection(targetUserId) {
+            const peerConnection = peerConnections[targetUserId];
+
+            try {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                await connection.invoke("SendOffer", targetUserId, JSON.stringify(offer));
+            } catch (error) {
+                console.error("Error during renegotiation:", error);
+            }
+        }
+        // Event listeners
+        document.getElementById('startCall').addEventListener('click', initializeWebRTC);
+        document.getElementById('shareScreen').addEventListener('click', shareScreen);
+        document.getElementById('stopScreen').addEventListener('click', stopScreenShare);
+        document.getElementById('leaveCall').addEventListener('click', leaveCall);
+
+        // Start the application
+        startConnection();
+</script>
+</body>
+</html>
