@@ -15,11 +15,9 @@ namespace SignalRApp
 {
     public class ChatHub : Hub
     {
-
-        [Authorize]
         public async Task Send(string message)
         {
-            await Clients.All.SendAsync("Receive", $"{Context.User.Identity.Name}: {message}");
+            await Clients.All.SendAsync("Receive", message, Context.User.Identity.Name);
         }
     public override async Task OnConnectedAsync()
         {

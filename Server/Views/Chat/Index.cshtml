@@ -40,7 +40,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
 <script>
     const hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl("/chat")
+        .withUrl("/chatpost")
         .build();
 
     // Функция для добавления сообщения в чат
@@ -79,7 +79,7 @@
         }
 
         // Отправка сообщения на сервер
-        hubConnection.invoke("Send", message, userName)
+        hubConnection.invoke("Send", message)
             .catch(function (err) {
                 console.error(err.toString());
             });
@@ -107,7 +107,7 @@
     document.getElementById("userName").addEventListener("input", function() {
         const userName = this.value.trim();
         const sendBtn = document.getElementById("sendBtn");
-        sendBtn.disabled = !userName;
+        //sendBtn.disabled = !userName;
     });
 
     // Запуск соединения
