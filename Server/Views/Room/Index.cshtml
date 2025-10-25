@@ -41,7 +41,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
 <script>
-    const username = @ViewBag.UserName;
+    const username = NaN; //Затычка
     const hubConnection = new signalR.HubConnectionBuilder()
         .withUrl("/chat")
         .build();

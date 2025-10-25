@@ -13,14 +13,15 @@ namespace Server.Controllers
 {
     public class AuthController : Controller
     {
+        private List<User> _users = new();
         [HttpGet]
         public IActionResult Register() => View();
+        [HttpPost]
         public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
             await userService.CreateUserAsync(user);
             return RedirectToAction("Login");
         }
-
         [HttpGet]
         public IActionResult Login() => View();
 
@@ -40,7 +41,9 @@ namespace Server.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
             if (returnUrl is not null)
                 return LocalRedirect(returnUrl);
+
             return Redirect("/");
         }
     }
 }
+
