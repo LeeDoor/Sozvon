@@ -26,6 +26,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
 );
-app.MapHub<ChatHub>("/chatpost");
+app.MapHub<ChatHub>("/chat");
 
 app.Run();
