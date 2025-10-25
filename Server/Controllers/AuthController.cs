@@ -13,6 +13,8 @@ namespace Server.Controllers
 {
     public class AuthController : Controller
     {
+        [HttpGet]
+        public IActionResult Register() => View();
         public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
             await userService.CreateUserAsync(user);
