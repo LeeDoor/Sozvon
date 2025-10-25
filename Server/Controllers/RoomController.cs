@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Server.Controllers
 {
     public class RoomController : Controller
     {
         [HttpGet]
-        public IActionResult Index() => View();
+        [Authorize]
+        public IActionResult Index() => View(User.Identity.Name);
     }
 }
