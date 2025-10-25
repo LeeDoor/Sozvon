@@ -27,5 +27,6 @@ app.MapControllerRoute(
     pattern: "{controller}/{action}"
 );
 app.MapHub<ChatHub>("/chat");
+app.MapHub<WebRTCHub>("/webrtchub");
 
 app.Run();
