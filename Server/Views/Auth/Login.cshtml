@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация</title>
+    <title>Вход</title>
     <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
@@ -21,10 +21,10 @@
 
             <div class="form-group">
                 <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" required placeholder="Введите ваш пароль"> <!-- Исправлено name -->
+                <input type="password" id="password" name="password" required placeholder="Введите ваш пароль"> 
             </div>
 
-            <button type="submit" class="btn">Войти</button> <!-- Убрал id, т.к. обрабатываем форму -->
+            <button type="submit" class="btn">Войти</button> 
         </form>
 
         <div class="links">
@@ -35,7 +35,7 @@
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Предотвращаем стандартную отправку формы
+            e.preventDefault();
 
             const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
@@ -59,7 +59,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include', // Добавлено для включения кук
+                credentials: 'include',
                 body: JSON.stringify(userAuth)
             })
             .then(response => {
