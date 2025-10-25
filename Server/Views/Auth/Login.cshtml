@@ -16,15 +16,15 @@
         <form id="loginForm">
             <div class="form-group">
                 <label for="login">Логин</label>
-                <input type="login" id="login" name="login" required placeholder="Введите ваш логин">
+                <input type="text" id="login" name="login" required placeholder="Введите ваш логин">
             </div>
 
             <div class="form-group">
                 <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" required placeholder="Введите ваш пароль">
+                <input type="password" id="password" name="password" required placeholder="Введите ваш пароль"> <!-- Исправлено name -->
             </div>
 
-            <button type="submit" class="btn" id="submitButton">Войти</button>
+            <button type="submit" class="btn">Войти</button> <!-- Убрал id, т.к. обрабатываем форму -->
         </form>
 
         <div class="links">
@@ -34,46 +34,51 @@
     </div>
 
     <script>
-        document.getElementById('submitButton').addEventListener('click', function(e) {
-            const email = document.getElementById('email').value;
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+
+            const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
 
-            if (!email || !password) {
+            errorMessage.style.display = 'none';
+
+            if (!login || !password) {
                 errorMessage.textContent = 'Пожалуйста, заполните все поля';
                 errorMessage.style.display = 'block';
                 return;
             }
+
+            const userAuth = {
+                login: login,
+                password: password
+            };
 
             fetch('/Auth/LoginPost', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    login: email,
-                    password: password
-                })
+                credentials: 'include', // Добавлено для включения кук
+                body: JSON.stringify(userAuth)
             })
             .then(response => {
                 if (response.redirected) {
                     window.location.href = response.url;
                 } else if (response.ok) {
                     return response.json().then(data => {
-                        console.log('Вход успешен:', data);
-                        // Если сервер возвращает URL для редиректа
                         if (data.redirectUrl) {
                             window.location.href = data.redirectUrl;
                         } else {
-                            window.location.href = '/'; // На главную по умолчанию
+                            window.location.href = '/';
                         }
                     });
+                } else if (response.status === 401) {
+                    errorMessage.textContent = 'Неверный логин или пароль';
+                    errorMessage.style.display = 'block';
                 } else {
-                    // Обработка ошибок сервера
-                    return response.json().then(data => {
-                        errorMessage.textContent = data.message || 'Ошибка входа';
-                        errorMessage.style.display = 'block';
-                    });
+                    errorMessage.textContent = 'Произошла ошибка при входе';
+                    errorMessage.style.display = 'block';
                 }
             })
             .catch(error => {
