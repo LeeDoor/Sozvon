@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
 using Server.Models.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -10,40 +9,6 @@ using System;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using Server.Models.Data.Services;
-
-namespace SignalRApp
-{
-    public class ChatHub : Hub
-    {
-
-        [Authorize]
-        public async Task Send(string message)
-        {
-            await Clients.All.SendAsync("Receive", $"{Context.User.Identity.Name}: {message}");
-        }
-    public override async Task OnConnectedAsync()
-        {
-            await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} вошел в чат");
-            await base.OnConnectedAsync();
-        }
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            
-            await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} покинул в чат");
-            await base.OnDisconnectedAsync(exception);
-        }
-    }
-}
-
-namespace Server.Controllers
-{
-    public class ChatController : Controller
-    {
-        [HttpGet]
-        public IActionResult Index() => View();
-    }
-}
-
 namespace Server.Controllers
 {
     public class AuthController : Controller
@@ -52,7 +17,7 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public async Task<IActionResult> RegisterPost(UserService userService, [Required] User user)
+        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
             await userService.CreateUserAsync(user);
             return RedirectToAction("Login");
@@ -63,7 +28,7 @@ namespace Server.Controllers
         [HttpPost]
         public async Task<IActionResult> LoginPost(
             UserService userService, string? returnUrl, 
-            [Required] UserCredential userCredential)
+            [Required][FromBody] UserCredential userCredential)
         {
             if (!await userService.ValidateUserAsync(userCredential))
                 return Unauthorized();
