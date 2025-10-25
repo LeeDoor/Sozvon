@@ -119,6 +119,224 @@
         .catch(function (err) {
             console.error(err.toString());
         });
+
+        class VideoChat {
+            constructor() {
+                this.localStream = null;
+                this.peerConnections = {};
+                this.remoteStreams = {};
+                this.roomId = null;
+
+                // Инициализация SignalR соединения
+                this.connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/videoHub")
+                    .build();
+
+                this.setupSignalRHandlers();
+                this.setupEventListeners();
+            }
+
+            setupSignalRHandlers() {
+                // Обработчики SignalR сообщений
+                this.connection.on("UserJoined", (connectionId) => {
+                    console.log(`User joined: ${connectionId}`);
+                    this.createPeerConnection(connectionId, true);
+                });
+
+                this.connection.on("UserDisconnected", (connectionId) => {
+                    console.log(`User disconnected: ${connectionId}`);
+                    this.removePeerConnection(connectionId);
+                });
+
+                this.connection.on("ReceiveOffer", async (connectionId, offer) => {
+                    await this.handleOffer(connectionId, offer);
+                });
+
+                this.connection.on("ReceiveAnswer", async (connectionId, answer) => {
+                    await this.handleAnswer(connectionId, answer);
+                });
+
+                this.connection.on("ReceiveIceCandidate", async (connectionId, candidate) => {
+                    await this.handleIceCandidate(connectionId, candidate);
+                });
+
+                this.connection.on("ReceiveVideoStream", (connectionId, videoData) => {
+                    this.handleVideoStream(connectionId, videoData);
+                });
+            }
+
+            setupEventListeners() {
+                document.getElementById('joinBtn').addEventListener('click', () => this.joinRoom());
+                document.getElementById('startVideoBtn').addEventListener('click', () => this.startVideo());
+                document.getElementById('stopVideoBtn').addEventListener('click', () => this.stopVideo());
+            }
+
+            async joinRoom() {
+                try {
+                    await this.connection.start();
+                    this.roomId = document.getElementById('roomId').value;
+                    await this.connection.invoke("JoinRoom", this.roomId);
+                    document.getElementById('status').textContent = `Connected to room: ${this.roomId}`;
+                } catch (err) {
+                    console.error('Connection error:', err);
+                }
+            }
+
+            async startVideo() {
+                try {
+                    // Запрашиваем доступ к камере и микрофону
+                    this.localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true
+                    });
+
+                    // Отображаем локальное видео
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = this.localStream;
+
+                    // Создаем peer connection для каждого участника комнаты
+                    const usersInRoom = await this.connection.invoke("GetUsersInRoom", this.roomId);
+                    usersInRoom.forEach(userId => {
+                        if (userId !== this.connection.connectionId) {
+                            this.createPeerConnection(userId, true);
+                        }
+                    });
+
+                } catch (err) {
+                    console.error('Error accessing media devices:', err);
+                }
+            }
+
+            stopVideo() {
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => track.stop());
+                    this.localStream = null;
+
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = null;
+                }
+
+                // Закрываем все peer connections
+                Object.keys(this.peerConnections).forEach(connectionId => {
+                    this.removePeerConnection(connectionId);
+                });
+            }
+
+            createPeerConnection(connectionId, isInitiator) {
+                const configuration = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                };
+
+                const peerConnection = new RTCPeerConnection(configuration);
+                this.peerConnections[connectionId] = peerConnection;
+
+                // Добавляем локальный поток в peer connection
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, this.localStream);
+                    });
+                }
+
+                // Обработчик получения удаленного потока
+                peerConnection.ontrack = (event) => {
+                    const remoteStream = event.streams[0];
+                    this.remoteStreams[connectionId] = remoteStream;
+                    this.displayRemoteVideo(connectionId, remoteStream);
+                };
+
+                // Обработчик ICE кандидатов
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        this.connection.invoke("SendIceCandidate", connectionId, JSON.stringify(event.candidate));
+                    }
+                };
+
+                // Создаем offer если мы инициатор
+                if (isInitiator) {
+                    this.createOffer(connectionId);
+                }
+
+                return peerConnection;
+            }
+
+            async createOffer(connectionId) {
+                try {
+                    const peerConnection = this.peerConnections[connectionId];
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+
+                    await this.connection.invoke("SendOffer", connectionId, JSON.stringify(offer));
+                } catch (err) {
+                    console.error('Error creating offer:', err);
+                }
+            }
+
+            async handleOffer(connectionId, offer) {
+                try {
+                    const peerConnection = this.createPeerConnection(connectionId, false);
+                    await peerConnection.setRemoteDescription(JSON.parse(offer));
+
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+
+                    await this.connection.invoke("SendAnswer", connectionId, JSON.stringify(answer));
+                } catch (err) {
+                    console.error('Error handling offer:', err);
+                }
+            }
+
+            async handleAnswer(connectionId, answer) {
+                try {
+                    const peerConnection = this.peerConnections[connectionId];
+                    await peerConnection.setRemoteDescription(JSON.parse(answer));
+                } catch (err) {
+                    console.error('Error handling answer:', err);
+                }
+            }
+
+            async handleIceCandidate(connectionId, candidate) {
+                try {
+                    const peerConnection = this.peerConnections[connectionId];
+                    await peerConnection.addIceCandidate(JSON.parse(candidate));
+                } catch (err) {
+                    console.error('Error handling ICE candidate:', err);
+                }
+            }
+
+            displayRemoteVideo(connectionId, stream) {
+                let videoElement = document.getElementById(`remoteVideo-${connectionId}`);
+
+                if (!videoElement) {
+                    videoElement = document.createElement('video');
+                    videoElement.id = `remoteVideo-${connectionId}`;
+                    videoElement.autoplay = true;
+                    document.getElementById('remoteVideos').appendChild(videoElement);
+                }
+
+                videoElement.srcObject = stream;
+            }
+
+            removePeerConnection(connectionId) {
+                const peerConnection = this.peerConnections[connectionId];
+                if (peerConnection) {
+                    peerConnection.close();
+                    delete this.peerConnections[connectionId];
+                }
+
+                // Удаляем видео элемент
+                const videoElement = document.getElementById(`remoteVideo-${connectionId}`);
+                if (videoElement) {
+                    videoElement.remove();
+                }
+            }
+        }
+
+        // Инициализация видеосвязи при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            window.videoChat = new VideoChat();
+        });
 </script>
 </body>
 </html>

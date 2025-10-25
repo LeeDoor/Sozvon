@@ -3,23 +3,78 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
 using Server.Models.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using System;
-using System.Data;
-using Microsoft.AspNetCore.Authorization;
-using Server.Models.Data.Services;
+using System.Collections.Concurrent;
 
 namespace SignalRApp
 {
+    public class VideoHub : Hub
+    {
+        private static readonly ConcurrentDictionary<string, string> _userConnections = new();
+        private static readonly ConcurrentDictionary<string, string> _userRooms = new();
+
+        public override async Task OnConnectedAsync()
+        {
+            _userConnections[Context.ConnectionId] = Context.ConnectionId;
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            // При отключении пользователя уведомляем других участников комнаты
+            if (_userRooms.TryRemove(Context.ConnectionId, out var roomId))
+            {
+                await Clients.Group(roomId).SendAsync("UserDisconnected", Context.ConnectionId);
+            }
+
+            _userConnections.TryRemove(Context.ConnectionId, out _);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        // Создание или присоединение к комнате
+        public async Task JoinRoom(string roomId)
+        {
+            _userRooms[Context.ConnectionId] = roomId;
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+
+            // Уведомляем других участников о новом пользователе
+            await Clients.OthersInGroup(roomId).SendAsync("UserJoined", Context.ConnectionId);
+        }
+
+        // Отправка видео-предложения WebRTC
+        public async Task SendOffer(string targetConnectionId, string offer)
+        {
+            await Clients.Client(targetConnectionId).SendAsync("ReceiveOffer", Context.ConnectionId, offer);
+        }
+
+        // Отправка видео-ответа WebRTC
+        public async Task SendAnswer(string targetConnectionId, string answer)
+        {
+            await Clients.Client(targetConnectionId).SendAsync("ReceiveAnswer", Context.ConnectionId, answer);
+        }
+
+        // Обмен ICE-кандидатами
+        public async Task SendIceCandidate(string targetConnectionId, string candidate)
+        {
+            await Clients.Client(targetConnectionId).SendAsync("ReceiveIceCandidate", Context.ConnectionId, candidate);
+        }
+
+        // Получение видео потока для трансляции (если нужно через сервер)
+        [HubMethodName("ReceiveVideoStream")]
+        public async Task ReceiveVideoStream(byte[] videoData)
+        {
+            if (_userRooms.TryGetValue(Context.ConnectionId, out var roomId))
+            {
+                // Пересылаем видео другим участникам комнаты
+                await Clients.OthersInGroup(roomId).SendAsync("ReceiveVideoData", Context.ConnectionId, videoData);
+            }
+        }
+    }
+}
     public class ChatHub : Hub
     {
-
-        [Authorize]
         public async Task Send(string message)
         {
-            await Clients.All.SendAsync("Receive", $"{Context.User.Identity.Name}: {message}");
+            await this.Clients.All.SendAsync("Receive", message);
         }
     public override async Task OnConnectedAsync()
         {
@@ -28,21 +83,12 @@ namespace SignalRApp
         }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            
             await Clients.All.SendAsync("Notify", $"{Context.ConnectionId} покинул в чат");
             await base.OnDisconnectedAsync(exception);
         }
     }
 }
 
-namespace Server.Controllers
-{
-    public class ChatController : Controller
-    {
-        [HttpGet]
-        public IActionResult Index() => View();
-    }
-}
 
 namespace Server.Controllers
 {
@@ -52,32 +98,21 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Register() => View();
         [HttpPost]
-        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
+        public IActionResult RegisterPost([Required] User user)
         {
-            await userService.CreateUserAsync(user);
-            return RedirectToAction("Login");
+            _users.Add(user);
+
+            return RedirectToAction("Login", new UserCredential { 
+                Login = user.Login, Password = user.Password });
         }
         [HttpGet]
         public IActionResult Login() => View();
         
         [HttpPost]
-        public async Task<IActionResult> LoginPost(
-            UserService userService, string? returnUrl, 
-            [Required][FromBody] UserCredential userCredential)
+        public IActionResult LoginPost()
         {
-            if (!await userService.ValidateUserAsync(userCredential))
-                return Unauthorized();
-            if (userCredential is null) return Unauthorized();
-            var claims = new List<Claim> {
-                new Claim(ClaimTypes.Name, userCredential.Login)
-            };
-            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
-            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-            if (returnUrl is not null)
-                return LocalRedirect(returnUrl);
-
-            return Redirect("/");
+            Console.WriteLine("LoginPost has been activated");
+            return RedirectToAction("Login");
         }
     }
 }
