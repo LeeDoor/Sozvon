@@ -13,25 +13,32 @@ namespace Server.Controllers
 {
     public class AuthController : Controller
     {
-        private List<User> _users = new();
-        [HttpGet]
-        public IActionResult Register() => View();
-        [HttpPost]
-        public IActionResult RegisterPost([Required] User user)
+        public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
-            _users.Add(user);
-
-            return RedirectToAction("Login", new UserCredential { 
-                Login = user.Login, Password = user.Password });
+            await userService.CreateUserAsync(user);
+            return RedirectToAction("Login");
         }
+
         [HttpGet]
         public IActionResult Login() => View();
-        
+
         [HttpPost]
-        public IActionResult LoginPost()
+        public async Task<IActionResult> LoginPost(
+            UserService userService, string? returnUrl,
+            [Required][FromBody] UserCredential userCredential)
         {
-            Console.WriteLine("LoginPost has been activated");
-            return RedirectToAction("Login");
+            if (!await userService.ValidateUserAsync(userCredential))
+                return Unauthorized();
+            if (userCredential is null) return Unauthorized();
+            var claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, userCredential.Login)
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+            if (returnUrl is not null)
+                return LocalRedirect(returnUrl);
+            return Redirect("/");
         }
     }
 }
