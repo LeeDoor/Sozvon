@@ -36,10 +36,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}");
 
-app.MapFallback(async context =>
-{
-    context.Response.Redirect("/VideoCall");
-});
 
 
 app.Run();
