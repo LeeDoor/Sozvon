@@ -29,8 +29,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
 );
-app.MapHub<WebRTCHub>("/webrtchub");
-app.MapHub<ChatHub>("/chat");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHub<WebRTCHub>("/webrtchub");
+    // Уберите регистрацию ChatHub если он больше не нужен
+    // endpoints.MapHub<ChatHub>("/chat");
+});
 
 app.MapControllerRoute(
     name: "default",
