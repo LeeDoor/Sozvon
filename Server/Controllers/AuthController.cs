@@ -42,7 +42,7 @@ namespace Server.Controllers
             if (returnUrl is not null)
                 return LocalRedirect(returnUrl);
 
-            return Redirect("/Room/Index");
+            return Redirect("/VideoCall");
         }
     }
 }
