@@ -1,0 +1,264 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.profile-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 500px;
+    display: flex;
+}
+
+/* Левая часть - информация о пользователе */
+.profile-info {
+    flex: 1;
+    background: #2c3e50;
+    color: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin-bottom: 30px;
+    border: 4px solid white;
+}
+
+.user-details h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.user-details .user-login {
+    color: #bdc3c7;
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.info-section {
+    margin-bottom: 30px;
+}
+
+    .info-section h3 {
+        color: #ecf0f1;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+        border-bottom: 2px solid #34495e;
+        padding-bottom: 8px;
+    }
+
+.info-item {
+    display: flex;
+    justify-content: between;
+    margin-bottom: 10px;
+    padding: 8px 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #bdc3c7;
+    min-width: 120px;
+}
+
+.info-value {
+    color: white;
+    flex: 1;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #667eea;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: #bdc3c7;
+}
+
+/* Правая часть - действия */
+.profile-actions {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.welcome-message {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+    .welcome-message h2 {
+        color: #2c3e50;
+        font-size: 1.8em;
+        margin-bottom: 10px;
+    }
+
+    .welcome-message p {
+        color: #7f8c8d;
+        font-size: 1.1em;
+    }
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.action-btn {
+    padding: 20px 30px;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+    }
+
+.btn-icon {
+    font-size: 1.3em;
+}
+
+.quick-actions {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #e9ecef;
+}
+
+    .quick-actions h3 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+.quick-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.quick-link {
+    padding: 12px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #495057;
+    text-align: center;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+}
+
+    .quick-link:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+.back-home {
+    margin-top: 30px;
+    text-align: center;
+}
+
+    .back-home a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .back-home a:hover {
+            text-decoration: underline;
+        }
+
+/* Анимации */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-info, .profile-actions {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.profile-actions {
+    animation-delay: 0.2s;
+}
