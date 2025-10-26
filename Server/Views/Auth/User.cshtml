@@ -1,0 +1,113 @@
+﻿@using Server.Models.Data
+@model User
+@{
+    ViewData["Title"] = "Профиль пользователя";
+    ViewBag.Login = Model.Login;
+    ViewBag.Name = Model.Name;
+    ViewBag.Password = Model.Password;
+    ViewBag.Id = Model.Id;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/userpage.css">
+</head>
+<body>
+    <div class="profile-container">
+        <!-- Левая часть - информация о пользователе -->
+        <div class="profile-info">
+            <div class="user-avatar">
+                @{
+                    var userName = @ViewBag.Name;
+                    var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "U";
+                }
+                @firstLetter
+            </div>
+            
+            <div class="user-details">
+                <h1>@ViewBag.Name</h1>
+                <div class="user-login">@@@ViewBag.Login</div>
+            </div>
+
+            <div class="info-section">
+                <h3>📊 Статистика</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">12</span>
+                        <span class="stat-label">Созданных комнат</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">47</span>
+                        <span class="stat-label">Участий в встречах</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">36ч</span>
+                        <span class="stat-label">Общее время</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">28</span>
+                        <span class="stat-label">Дней в системе</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>👤 Информация</h3>
+                <div class="info-item">
+                    <span class="info-label">ID пользователя:</span>
+                    <span class="info-value">#@ViewBag.Id</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Статус:</span>
+                    <span class="info-value" style="color: #28a745;">● Активен</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Дата регистрации:</span>
+                    <span class="info-value">@DateTime.Now.AddDays(-28).ToString("dd.MM.yyyy")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Последний вход:</span>
+                    <span class="info-value">Сегодня, @DateTime.Now.ToString("HH:mm")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая часть - действия -->
+        <div class="profile-actions">
+            <div class="welcome-message">
+                <h2>С возвращением! 🎉</h2>
+                <p>Готовы начать новую видеовстречу?</p>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/VideoCall" class="action-btn btn-primary">
+                    <span class="btn-icon">🎪</span>
+                    Создать новую комнату
+                </a>
+                
+                <a href="/VideoCall" class="action-btn btn-success">
+                    <span class="btn-icon">🚪</span>
+                    Присоединиться к комнате
+                </a>
+            </div>
+
+            <!--<div class="quick-actions">
+                <h3>Быстрые действия</h3>
+                <div class="quick-links">
+                    <a href="/Room/List" class="quick-link">📋 Мои комнаты</a>
+                    <a href="/Settings" class="quick-link">⚙️ Настройки</a>
+                    <a href="/History" class="quick-link">📊 История</a>
+                    <a href="/Help" class="quick-link">❓ Помощь</a>
+                </div>
+            </div>-->
+
+            <div class="back-home">
+                <a href="/">← Вернуться на главную</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

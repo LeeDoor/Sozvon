@@ -125,7 +125,7 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                     <h3>🔗 Присоединиться к комнате</h3>
                     <div class="form-group">
                         <label for="joinRoomId">ID комнаты:</label>
-                        <input type="text" id="joinRoomId" class="form-control" placeholder="Введите 20-символьный ID">
+                        <input type="text" id="joinRoomId" class="form-control" placeholder="Введите 5-символьный ID">
                     </div>
                     <button id="joinRoomBtn" class="btn btn-success">🚪 Присоединиться</button>
                 </div>
@@ -168,9 +168,9 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                     <button id="disconnectBtn" class="control-btn leave">
                         📞 Покинуть комнату
                     </button>
-                    <button id="syncConnectionsBtn" class="control-btn" style="background: #17a2b8;">
+                    <!--<button id="syncConnectionsBtn" class="control-btn" style="background: #17a2b8;">
                         🔄 Синхронизировать
-                    </button>
+                    </button>-->
                 </div>
 
                 <!-- Сообщение когда нет подключения -->
@@ -222,7 +222,6 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
             const createRoomBtn = document.getElementById('createRoomBtn');
             const joinRoomBtn = document.getElementById('joinRoomBtn');
             const leaveRoomBtn = document.getElementById('leaveRoomBtn');
-            const syncConnectionsBtn = document.getElementById('syncConnectionsBtn');
 
             // Кнопки управления
             const toggleCameraBtn = document.getElementById('toggleCameraBtn');
@@ -386,11 +385,13 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
 
                 try {
                     createRoomBtn.disabled = true;
+                    joinRoomBtn.disabled = true;
                     const roomInfo = await connection.invoke("CreateRoom", roomName);
                     await joinRoom(roomInfo.roomId);
                 } catch (error) {
                     alert('Ошибка создания комнаты: ' + error.message);
                     createRoomBtn.disabled = false;
+                    joinRoomBtn.disabled = false;
                 }
             });
 
@@ -404,10 +405,12 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                 const roomId = document.getElementById('joinRoomId').value.trim();
 
                 try {
+                    createRoomBtn.disabled = true;
                     joinRoomBtn.disabled = true;
                     await joinRoom(roomId);
                 } catch (error) {
                     alert('Ошибка подключения: ' + error.message);
+                    createRoomBtn.disabled = false;
                     joinRoomBtn.disabled = false;
                 }
             });
@@ -451,6 +454,9 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                     await connection.invoke("LeaveRoom", currentRoom.roomId);
                     leaveRoom();
                 }
+
+                createRoomBtn.disabled = false;
+                joinRoomBtn.disabled = false;
             });
 
             disconnectBtn.addEventListener('click', async () => {
@@ -458,8 +464,11 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                     await connection.invoke("LeaveRoom", currentRoom.roomId);
                     leaveRoom();
                 }
-            });
 
+                createRoomBtn.disabled = false;
+                joinRoomBtn.disabled = false;
+            });
+            
             // Обработчик синхронизации
             syncConnectionsBtn.addEventListener('click', async () => {
                 await syncAllConnections();
