@@ -9,6 +9,7 @@ using System;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using Server.Models.Data.Services;
+using Microsoft.AspNetCore.Identity;
 namespace Server.Controllers
 {
     public class AuthController : Controller
@@ -20,10 +21,15 @@ namespace Server.Controllers
         public async Task<IActionResult> RegisterPost(UserService userService, [FromBody][Required] User user)
         {
             await userService.CreateUserAsync(user);
-            return RedirectToAction("Login");
+            return RedirectToAction("Login", new UserCredential { Login = user.Login, Password = user.Password });
         }
         [HttpGet]
-        public IActionResult Login() => View();
+        public IActionResult Login(UserCredential userCredential)
+        {
+            if (userCredential.Login is not null) return View(userCredential);
+            if (User.Identity is not null) return View(new UserCredential { Login = User.Identity.Name, Password = "" });
+            return View();
+        }
 
         [HttpPost]
         public async Task<IActionResult> LoginPost(
@@ -42,7 +48,7 @@ namespace Server.Controllers
             if (returnUrl is not null)
                 return LocalRedirect(returnUrl);
 
-            return Redirect("/Room/Index");
+            return Redirect("/VideoCall");
         }
     }
 }

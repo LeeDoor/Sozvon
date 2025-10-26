@@ -6,7 +6,7 @@ namespace SignalRApp
     {
         public async Task Send(string message)
         {
-            await Clients.All.SendAsync("Receive", message, Context.User.Identity.Name);
+            await Clients.All.SendAsync("Receive", message, Context?.User?.Identity?.Name ?? "Гость");
         }
     public override async Task OnConnectedAsync()
         {

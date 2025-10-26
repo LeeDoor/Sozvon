@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>WebRTC Screen Share</title>
+</head>
+<body>
+    <div>
+        <button id="joinBtn">JOIN</button>
+        <button id="translateBtn" disabled>TRANSLATE</button>
+        <button id="stoptransBtn" disabled>STOP TRANSLATE</button>
+        <button id="leaveBtn" disabled>LEAVE</button>
+    </div>
+
+    <div id="videosContainer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        let connection = null;
+        let localStream = null;
+        let outPeers = {};
+        let inPeers = {};
+        let isJoined = false;
+        let isSharing = false;
+
+        const joinBtn = document.getElementById('joinBtn');
+        const translateBtn = document.getElementById('translateBtn');
+        const stoptransBtn = document.getElementById('stoptransBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const videosContainer = document.getElementById('videosContainer');
+
+        joinBtn.onclick = joinRoom;
+        translateBtn.onclick = startTranslation;
+        stoptransBtn.onclick = stopTranslation;
+        leaveBtn.onclick = leaveRoom;
+        async function joinRoom() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/webrtcHub")
+                .build();
+
+            setupSignalREvents();
+
+            try {
+                await connection.start();
+                console.log("Connected to SignalR hub");
+                isJoined = true;
+                joinBtn.disabled = true;
+                translateBtn.disabled = false;
+                stoptransBtn.disabled = true;
+                leaveBtn.disabled = false;
+
+                // Get all existing users and connect to those who are sharing
+                const existingUsers = await connection.invoke("GetConnectedUsers");
+                console.log("Existing users:", existingUsers);
+
+                // Request connections to all existing users
+                for (const userId of existingUsers) {
+                    await createPeerConnection(userId, false);
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function setupSignalREvents() {
+            connection.on("UserConnected", (userId) => {
+                console.log("User connected:", userId);
+                createPeerConnection(userId, true);
+            });
+
+            connection.on("UserDisconnected", (userId) => {
+                console.log("User disconnected:", userId);
+                if (inPeers[userId]) {
+                    inPeers[userId].close();
+                    delete inPeers[userId];
+                }
+                if (outPeers[userId]) {
+                    outPeers[userId].close();
+                    delete outPeers[userId];
+                }
+                const videoElement = document.getElementById(`video-${userId}`);
+                if (videoElement) videoElement.remove();
+            });
+
+            connection.on("ReceiveOffer", async (userId, offer) => {
+                console.log("Received offer from:", userId);
+                await handleOffer(userId, offer);
+            });
+
+            connection.on("ReceiveAnswer", async (userId, answer) => {
+                console.log("Received answer from:", userId);
+                await handleAnswer(userId, answer);
+            });
+
+            connection.on("ReceiveIceCandidate", async (isInitiator, userId, candidate) => {
+                console.log("Received ICE candidate from:", userId);
+                await handleIceCandidate(isInitiator, userId, candidate);
+            });
+            connection.on("UserStoppedSharing", (userId) => {
+                if(outPeer[userId]){
+                    outPeers[userId].close();
+                    delete outPeers[userId];
+                }
+                if(iutPeer[userId]){
+                    inPeers[userId].close();
+                    delete inPeers[userId];
+                }
+                videosContainer.removeChild(document.getElementById('videos-${userId}'));
+            });
+
+            // New event: when a user starts sharing 
+            connection.on("UserStartedSharing", async (userId) => {
+                console.log("User started sharing:", userId);
+                // Create connection to this user who just started sharing
+                if (isJoined && userId !== connection.connectionId) {
+                    await createPeerConnection(userId, false);
+                }
+            });
+        }
+
+        async function startTranslation() {
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+
+                // Handle when user stops sharing using the browser's built-in stop button
+                localStream.getTracks().forEach(track => {
+                    track.onended = () => {
+                        stopTranslation();
+                    };
+                });
+
+                translateBtn.disabled = true;
+                stoptransBtn.disabled = false;
+                isSharing = true;
+                setupLocalVideo();
+
+                // Notify all users that we started sharing
+                await connection.invoke("NotifyStartedSharing");
+
+                // Share stream with all connected users
+                const existingUsers = await connection.invoke("GetConnectedUsers");
+                console.log("Sharing with users:", existingUsers);
+
+                for (const userId of existingUsers) {
+                    await createPeerConnection(userId, true);
+                }
+
+            } catch (err) {
+                console.error("Error accessing media devices:", err);
+            }
+        }
+
+        function stopTranslation() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            isSharing = false;
+            translateBtn.disabled = false;
+            stoptransBtn.disabled = true;
+
+            const localVideo = document.getElementById('local-video');
+            if (localVideo) localVideo.remove();
+            Object.values(outPeers).forEach(peer => peer.close());
+            outPeers = {};
+            connection.invoke("NotifyStoppedSharing");
+            // REMOVE video-${userId} FROM videosContainer
+            // REMOVE video-${userId} FROM videosContainer
+            // REMOVE video-${userId} FROM videosContainer
+            // REMOVE video-${userId} FROM videosContainer
+            // REMOVE video-${userId} FROM videosContainer
+        }
+
+        function setupLocalVideo() {
+            const video = document.createElement('video');
+            video.id = 'local-video';
+            video.srcObject = localStream;
+            video.autoplay = true;
+            video.playsInline = true;
+            video.style.width = '300px';
+            video.style.height = '200px';
+            videosContainer.appendChild(video);
+        }
+
+        async function createPeerConnection(userId, isInitiator = false) {
+            const peerConnection = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            if(isInitiator) {
+                outPeers[userId] = peerConnection;
+            } else {
+                inPeers[userId] = peerConnection;
+            }
+
+            // Add local stream tracks if we're sharing
+            if (localStream && isInitiator) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+            }
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    connection.invoke("SendIceCandidate", isInitiator, userId, JSON.stringify(event.candidate));
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                console.log("Received remote track from:", userId);
+                const remoteVideo = document.createElement('video');
+                remoteVideo.id = `video-${userId}`;
+                remoteVideo.srcObject = event.streams[0];
+                remoteVideo.autoplay = true;
+                remoteVideo.playsInline = true;
+                remoteVideo.style.width = '300px';
+                remoteVideo.style.height = '200px';
+                videosContainer.appendChild(remoteVideo);
+            };
+
+            peerConnection.onconnectionstatechange = () => {
+                console.log(`Connection state with ${userId}: ${peerConnection.connectionState}`);
+            };
+
+            if (isInitiator) {
+                try {
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    await connection.invoke("SendOffer", userId, JSON.stringify(offer));
+                } catch (err) {
+                    console.error("Error creating offer:", err);
+                }
+            }
+
+            return peerConnection;
+        }
+
+        async function handleOffer(userId, offer) {
+            console.log("Handling offer from:", userId);
+            let peerConnection = inPeers[userId];
+
+            if (!peerConnection) {
+                peerConnection = await createPeerConnection(userId, false);
+            }
+
+            try {
+                await peerConnection.setRemoteDescription(JSON.parse(offer));
+
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                await connection.invoke("SendAnswer", userId, JSON.stringify(answer));
+            } catch (err) {
+                console.error("Error handling offer:", err);
+            }
+        }
+
+        async function handleAnswer(userId, answer) {
+            const peerConnection = outPeers[userId];
+            if (peerConnection) {
+                try {
+                    await peerConnection.setRemoteDescription(JSON.parse(answer));
+                } catch (err) {
+                    console.error("Error handling answer:", err);
+                }
+            }
+        }
+
+        async function handleIceCandidate(isInitiator, userId, candidate) {
+            let peerConnection;
+            if(isInitiator) {
+                peerConnection = outPeers[userId];
+            } else {
+                peerConnection = inPeers[userId];
+            }
+            if (peerConnection) {
+                try {
+                    await peerConnection.addIceCandidate(JSON.parse(candidate));
+                } catch (err) {
+                    console.error("Error adding ICE candidate:", err);
+                }
+            }
+        }
+
+        function leaveRoom() {
+            // Stop local stream if sharing
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            // Close all peer connections
+            Object.values(outPeers).forEach(peer => peer.close());
+            Object.values(inPeers).forEach(peer => peer.close());
+            outPeers = {};
+            inPeers = {};
+
+            // Disconnect from SignalR
+            if (connection) {
+                connection.stop();
+            }
+
+            // Clear UI
+            videosContainer.innerHTML = '';
+            isJoined = false;
+            isSharing = false;
+            joinBtn.disabled = false;
+            translateBtn.disabled = true;
+            stoptransBtn.disabled = true;
+            leaveBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
