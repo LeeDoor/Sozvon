@@ -44,6 +44,48 @@ namespace Server.Models.Data.Services
             }
         }
 
+        public async Task RemoveUserFromRoomAsync(UserId userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user != null && user.ConferenceRoomId.HasValue)
+            {
+                user.ConferenceRoomId = null;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<bool> RemoveUserFromRoomAsync(ConferenceRoomId roomId, UserId userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user != null && user.ConferenceRoomId == roomId)
+            {
+                user.ConferenceRoomId = null;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task RemoveAllUsersFromRoomAsync(ConferenceRoomId roomId)
+        {
+            var usersInRoom = await _context.Users
+                .Where(u => u.ConferenceRoomId == roomId)
+                .ToListAsync();
+
+            foreach (var user in usersInRoom)
+            {
+                user.ConferenceRoomId = null;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
         public async Task<ConferenceRoom?> GetRoomByIdAsync(ConferenceRoomId roomId)
         {
             return await _context.ConferenceRooms
@@ -69,6 +111,16 @@ namespace Server.Models.Data.Services
                 .Include(r => r.Users)
                 .FirstOrDefaultAsync(r => r.Link == link && r.IsActive);
         }
+
+        public async Task<ConferenceRoom?> GetRoomByUserIdAsync(UserId userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.ConferenceRoom)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            return user?.ConferenceRoom;
+        }
+
         private static string GenerateRoomLink()
         {
             return Guid.NewGuid().ToString("N")[..5];
