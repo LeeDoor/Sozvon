@@ -28,12 +28,23 @@ namespace Server.Models.Data.Services
 
         public async Task<List<ChatMessage>> GetRoomMessagesAsync(ConferenceRoomId roomId, int count = 100)
         {
-            return await _context.ChatMessages
+            var messages = await _context.ChatMessages
                 .Where(m => m.ConferenceRoomId == roomId)
                 .Include(m => m.User)
                 .OrderByDescending(m => m.DateTime)
-                .Take(count)
-                .OrderBy(m => m.DateTime) 
+                .Take(count)                       
+                .ToListAsync();
+
+            
+            return messages.OrderBy(m => m.DateTime).ToList();
+        }
+
+        public async Task<List<ChatMessage>> GetMessagesSinceAsync(ConferenceRoomId roomId, DateTime since)
+        {
+            return await _context.ChatMessages
+                .Where(m => m.ConferenceRoomId == roomId && m.DateTime > since)
+                .Include(m => m.User)
+                .OrderBy(m => m.DateTime)
                 .ToListAsync();
         }
     }
