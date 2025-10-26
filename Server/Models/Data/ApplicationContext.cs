@@ -11,6 +11,7 @@ namespace Server.Models.Data
         public static ApplicationContext Instance => instance ?? (instance = new ApplicationContext());
         private ApplicationContext()
         {
+            Database.EnsureDeleted();
             Database.EnsureCreated();
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
