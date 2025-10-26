@@ -523,7 +523,7 @@
             // Присоединиться к комнате
             async function joinRoom(roomId) {
             try {
-                const result = await connection.invoke("JoinRoom", roomId, "");
+                const result = await connection.invoke("JoinRoom", roomId);
 
                 if (result.success) {
                     currentRoom = result.roomInfo;
@@ -790,7 +790,7 @@
             videoWrapper.innerHTML = `
                 <video id="remoteVideo-${userInfo.userId}" autoplay playsinline></video>
                 <div class="video-overlay">
-                    <div class="user-name">${userInfo.userName}</div>
+                    <div class="user-name">${userInfo.userName}@@</div>
                     <div class="user-status">
                         <div class="status-icon">📹 <span class="camera-status">Выкл</span></div>
                         <div class="status-icon">🎤 <span class="mic-status">Выкл</span></div>
