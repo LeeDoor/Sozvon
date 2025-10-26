@@ -48,7 +48,17 @@ namespace Server.Controllers
             if (returnUrl is not null)
                 return LocalRedirect(returnUrl);
 
-            return Redirect("/VideoCall");
+            return Redirect("/Auth/User");
+        }
+        [HttpGet]
+        [ActionName("User")]
+        public async Task<IActionResult> UserPage(UserService userService)
+        {
+            string? userId = HttpContext.User?.Identity?.Name;
+            if (userId is null) return Unauthorized();
+            User? user = await userService.GetUserByLoginAsync(userId);
+            if (user is null) return Unauthorized();
+            return View(user);
         }
     }
 }
