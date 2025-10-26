@@ -39,7 +39,7 @@ namespace Server.Models.Data.Services
             return messages.OrderBy(m => m.DateTime).ToList();
         }
 
-        public async Task<List<ChatMessage>> GetMessagesSinceAsync(ConferenceRoomId roomId, DateTime since)
+        public async Task<List<ChatMessage>> GetMessagesBeforeAsync(ConferenceRoomId roomId, DateTime since)
         {
             return await _context.ChatMessages
                 .Where(m => m.ConferenceRoomId == roomId && m.DateTime < since)
