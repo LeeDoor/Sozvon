@@ -34,22 +34,24 @@ namespace Server.Hubs
             {
                 await LeaveRoom(previousRoomId);
             }
-            string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
-            room.Users.Add(new UserInfo { 
-                UserId = Context.ConnectionId, 
-                UserName = userName 
-            });
-            _userRooms[Context.ConnectionId] = roomId;
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            
+            string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
             var userInfo = new UserInfo
             {
                 UserId = Context.ConnectionId,
                 UserName = userName
             };
 
+            room.Users.Add(userInfo);
+            _userRooms[Context.ConnectionId] = roomId;
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+
+            // Уведомляем всех в комнате о новом пользователе
             await Clients.OthersInGroup(roomId).SendAsync("UserJoined", userInfo);
+
+            // Уведомляем всех в комнате о новом сообщении в чате
+            await Clients.Group(roomId).SendAsync("ReceiveChatMessage", "Система", $"{userName} присоединился к комнате", false);
 
             var existingUsers = room.Users.Where(x => x.UserId != Context.ConnectionId).ToList();
 
@@ -70,16 +72,33 @@ namespace Server.Hubs
         {
             if (_rooms.TryGetValue(roomId, out Room room))
             {
+                var user = room.Users.FirstOrDefault(x => x.UserId == Context.ConnectionId);
                 room.Users.RemoveWhere(x => x.UserId == Context.ConnectionId);
                 _userRooms.TryRemove(Context.ConnectionId, out string _);
 
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
                 await Clients.OthersInGroup(roomId).SendAsync("UserLeft", Context.ConnectionId);
 
+                // Уведомляем о выходе пользователя в чате
+                if (user != null)
+                {
+                    await Clients.Group(roomId).SendAsync("ReceiveChatMessage", "Система", $"{user.UserName} покинул комнату", false);
+                }
+
                 if (room.Users.Count <= 0)
                 {
                     _rooms.TryRemove(roomId, out Room _);
                 }
+            }
+        }
+
+        // Новый метод для отправки сообщений в чат комнаты
+        public async Task SendMessageToRoom(string roomId, string message)
+        {
+            if (_rooms.TryGetValue(roomId, out Room room) && room.Users.Any(u => u.UserId == Context.ConnectionId))
+            {
+                string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
+                await Clients.Group(roomId).SendAsync("ReceiveChatMessage", userName, message, true);
             }
         }
 
