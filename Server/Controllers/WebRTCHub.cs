@@ -145,10 +145,11 @@ namespace Server.Hubs
 
         private string GenerateRoomId()
         {
-            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const uint idSize = 5;
             Random random = new Random();
-            char[] result = new char[20];
-            for (int i = 0; i < 20; i++)
+            char[] result = new char[idSize];
+            for (int i = 0; i < idSize; i++)
             {
                 result[i] = chars[random.Next(chars.Length)];
             }
