@@ -5,7 +5,10 @@ namespace Server.Models.Data.Services
     public class ConferenceRoomService
     {
         private readonly ApplicationContext _context;
-
+        public ConferenceRoomService()
+        {
+            _context = ApplicationContext.Instance;
+        }
         public ConferenceRoomService(ApplicationContext context)
         {
             _context = context;

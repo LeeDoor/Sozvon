@@ -7,8 +7,9 @@ namespace Server.Models.Data
         public DbSet<ConferenceRoom> ConferenceRooms => Set<ConferenceRoom>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
-
-        public ApplicationContext()
+        private static ApplicationContext instance;
+        public static ApplicationContext Instance => instance ?? (instance = new ApplicationContext());
+        private ApplicationContext()
         {
             Database.EnsureCreated();
         }

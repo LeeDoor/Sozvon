@@ -63,9 +63,9 @@ namespace Server.Hubs
                 },
                 ExistingUsers = existingUsers.Select(user => new UserInfo()
                 {
-                    UserId = user.Login;
-                    UserName = user.Name;
-                })
+                    UserId = user.Login,
+                    UserName = user.Name
+                }).ToList()
             };
         }
 
@@ -125,7 +125,7 @@ namespace Server.Hubs
         {
             string userName = Context.User?.Identity?.Name;
             ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
-            await LeaveRoom(userService, room.Id);
+            await LeaveRoom(room.Id);
 
             await base.OnDisconnectedAsync(exception);
         }

@@ -5,10 +5,9 @@ namespace Server.Models.Data.Services
     public class UserService
     {
         private readonly ApplicationContext _context;
-
-        public UserService(ApplicationContext context)
+        public UserService()
         {
-            _context = context;
+            _context = ApplicationContext.Instance;
         }
         public async Task CreateUserAsync(User user)
         {

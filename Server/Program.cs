@@ -3,6 +3,7 @@ using Server.Models.Data.Services;
 using SignalRApp;
 using Server.Hubs;
 using Server.Models.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -17,14 +18,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/";
         options.SlidingExpiration = true;
     });
-builder.Services.AddSingleton<ApplicationContext>();
-builder.Services.AddSingleton<UserService>();
-builder.Services.AddSingleton<ConferenceRoomService>();
+builder.Services.AddSingleton(provider => new UserService());
+builder.Services.AddSingleton(provider => new ConferenceRoomService());
 
 var app = builder.Build();
-app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthorization();
 app.UseAuthentication();
 app.UseDefaultFiles();
 app.UseStaticFiles();
