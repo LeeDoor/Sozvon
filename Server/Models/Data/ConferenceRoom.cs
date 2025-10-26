@@ -11,7 +11,7 @@ namespace Server.Models.Data
         [Required]
         public string Link {  get; set; }
         public bool IsActive { get; set; }
-        public List<User>? Users { get; set; }
+        public List<User>? Users { get; set; } = new();
         public List<ChatMessage>? ChatMessages { get; set; }
     }
 }
