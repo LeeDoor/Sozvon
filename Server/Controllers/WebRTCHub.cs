@@ -12,7 +12,7 @@ namespace Server.Hubs
         {
             public string Id { get; set; }
             public string Name { get; set; }
-            public HashSet<string> Users { get; set; }
+            public HashSet<UserInfo> Users { get; set; }
             public int MaxUsers { get; set; }
         }
 
@@ -23,7 +23,7 @@ namespace Server.Hubs
             {
                 Id = roomId,
                 Name = string.IsNullOrEmpty(roomName) ? "Комната " + roomId : roomName,
-                Users = new HashSet<string>(),
+                Users = new(),
                 MaxUsers = 30
             };
 
@@ -37,7 +37,7 @@ namespace Server.Hubs
             };
         }
 
-        public async Task<JoinResult> JoinRoom(string roomId, string userName)
+        public async Task<JoinResult> JoinRoom(string roomId)
         {
             if (!_rooms.TryGetValue(roomId, out Room room))
             {
@@ -53,32 +53,24 @@ namespace Server.Hubs
             {
                 await LeaveRoom(previousRoomId);
             }
-
-            room.Users.Add(Context.ConnectionId);
+            string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
+            room.Users.Add(new UserInfo { 
+                UserId = Context.ConnectionId, 
+                UserName = userName 
+            });
             _userRooms[Context.ConnectionId] = roomId;
 
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-
+            
             var userInfo = new UserInfo
             {
                 UserId = Context.ConnectionId,
-                UserName = string.IsNullOrEmpty(userName) ? "User" + Context.ConnectionId.Substring(0, 8) : userName
+                UserName = userName
             };
 
             await Clients.OthersInGroup(roomId).SendAsync("UserJoined", userInfo);
 
-            var existingUsers = new List<UserInfo>();
-            foreach (string userId in room.Users)
-            {
-                if (userId != Context.ConnectionId)
-                {
-                    existingUsers.Add(new UserInfo
-                    {
-                        UserId = userId,
-                        UserName = "User" + userId.Substring(0, 8)
-                    });
-                }
-            }
+            var existingUsers = room.Users.Where(x => x.UserId != Context.ConnectionId).ToList();
 
             return new JoinResult
             {
@@ -97,7 +89,7 @@ namespace Server.Hubs
         {
             if (_rooms.TryGetValue(roomId, out Room room))
             {
-                room.Users.Remove(Context.ConnectionId);
+                room.Users.RemoveWhere(x => x.UserId == Context.ConnectionId);
                 _userRooms.TryRemove(Context.ConnectionId, out string _);
 
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
@@ -145,10 +137,11 @@ namespace Server.Hubs
 
         private string GenerateRoomId()
         {
-            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const uint idSize = 5;
             Random random = new Random();
-            char[] result = new char[20];
-            for (int i = 0; i < 20; i++)
+            char[] result = new char[idSize];
+            for (int i = 0; i < idSize; i++)
             {
                 result[i] = chars[random.Next(chars.Length)];
             }
