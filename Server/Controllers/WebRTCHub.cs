@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Server.Models.Data;
 using Server.Models.Data.Services;
 using System.Collections.Concurrent;
@@ -8,10 +9,7 @@ namespace Server.Hubs
     public class WebRTCHub : Hub
     {
         private readonly ConferenceRoomService _roomService;
-        public WebRTCHub(ConferenceRoomService roomService)
-        {
-            _roomService = roomService;
-        }
+        private readonly UserService userService;
         public async Task<RoomInfo> CreateRoom(string roomName)
         {
             ConferenceRoom room = await _roomService.CreateRoomAsync(roomName);
@@ -29,10 +27,12 @@ namespace Server.Hubs
             {
                 return new JoinResult { Success = false, Error = "Комната не найдена" };
             }
-
-            if (_roomService.getroo _userRooms.TryGetValue(Context.ConnectionId, out string previousRoomId))
-            {
-                await LeaveRoom(previousRoomId);
+            string? userId = Context.User?.Identity?.Name;
+            if (userId is null) return new JoinResult { Success = false };
+            ConferenceRoom? previousRoom = await _roomService.GetRoomByUserLoginAsync(userId);
+            if(previousRoom is not null)
+            {          
+                await LeaveRoom(previousRoom.Id);
             }
 
             string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
@@ -42,9 +42,6 @@ namespace Server.Hubs
                 UserName = userName
             };
 
-            room.Users.Add(userInfo);
-            _userRooms[Context.ConnectionId] = roomId;
-
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
             // Уведомляем всех в комнате о новом пользователе
@@ -53,41 +50,43 @@ namespace Server.Hubs
             // Уведомляем всех в комнате о новом сообщении в чате
             await Clients.Group(roomId).SendAsync("ReceiveChatMessage", "Система", $"{userName} присоединился к комнате", false);
 
-            var existingUsers = room.Users.Where(x => x.UserId != Context.ConnectionId).ToList();
+            List<User> existingUsers = room.Users.Where(x => x.Login != userName).ToList();
 
             return new JoinResult
             {
                 Success = true,
                 RoomInfo = new RoomInfo
                 {
-                    RoomId = room.Id,
+                    RoomId = room.Link,
                     RoomName = room.Name,
                     UsersCount = room.Users.Count
                 },
-                ExistingUsers = existingUsers
+                ExistingUsers = existingUsers.Select(user => new UserInfo()
+                {
+                    UserId = user.Login;
+                    UserName = user.Name;
+                })
             };
         }
 
-        public async Task LeaveRoom(string roomId)
+        public async Task LeaveRoom(ConferenceRoomId roomId)
         {
-            if (_rooms.TryGetValue(roomId, out Room room))
+            string userName = Context.User?.Identity?.Name;
+            ConferenceRoom? room = await _roomService.GetRoomByIdAsync(roomId);
+            if (room is not null)
             {
-                var user = room.Users.FirstOrDefault(x => x.UserId == Context.ConnectionId);
-                room.Users.RemoveWhere(x => x.UserId == Context.ConnectionId);
-                _userRooms.TryRemove(Context.ConnectionId, out string _);
+                await _roomService.RemoveUserFromRoomAsync(roomId);
 
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-                await Clients.OthersInGroup(roomId).SendAsync("UserLeft", Context.ConnectionId);
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Link);
+                await Clients.OthersInGroup(room.Link).SendAsync("UserLeft", userName);
 
                 // Уведомляем о выходе пользователя в чате
-                if (user != null)
-                {
-                    await Clients.Group(roomId).SendAsync("ReceiveChatMessage", "Система", $"{user.UserName} покинул комнату", false);
-                }
+                await Clients.Group(room.Link)
+                    .SendAsync("ReceiveChatMessage", "Система", $"{userName} покинул комнату", false);
 
                 if (room.Users.Count <= 0)
                 {
-                    _rooms.TryRemove(roomId, out Room _);
+                    // REMOVE ROOM DO NOT FORGET
                 }
             }
         }
@@ -95,11 +94,7 @@ namespace Server.Hubs
         // Новый метод для отправки сообщений в чат комнаты
         public async Task SendMessageToRoom(string roomId, string message)
         {
-            if (_rooms.TryGetValue(roomId, out Room room) && room.Users.Any(u => u.UserId == Context.ConnectionId))
-            {
-                string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
-                await Clients.Group(roomId).SendAsync("ReceiveChatMessage", userName, message, true);
-            }
+            await Clients.Group(roomId).SendAsync("ReceiveChatMessage", Context.User.Identity.Name, message, true);
         }
 
         public async Task SendSignal(string targetUserId, object signal)
@@ -114,9 +109,10 @@ namespace Server.Hubs
 
         public async Task UpdateMediaState(bool hasCamera, bool hasMicrophone)
         {
-            if (_userRooms.TryGetValue(Context.ConnectionId, out string roomId))
+            string userName = Context.User?.Identity?.Name;
+            ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
             {
-                await Clients.OthersInGroup(roomId).SendAsync("UserMediaUpdated", new
+                await Clients.OthersInGroup(room.Link).SendAsync("UserMediaUpdated", new
                 {
                     UserId = Context.ConnectionId,
                     HasCamera = hasCamera,
@@ -127,10 +123,9 @@ namespace Server.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            if (_userRooms.TryGetValue(Context.ConnectionId, out string roomId))
-            {
-                await LeaveRoom(roomId);
-            }
+            string userName = Context.User?.Identity?.Name;
+            ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
+            await LeaveRoom(userService, room.Id);
 
             await base.OnDisconnectedAsync(exception);
         }

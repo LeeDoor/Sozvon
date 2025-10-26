@@ -112,11 +112,11 @@ namespace Server.Models.Data.Services
                 .FirstOrDefaultAsync(r => r.Link == link && r.IsActive);
         }
 
-        public async Task<ConferenceRoom?> GetRoomByUserIdAsync(UserId userId)
+        public async Task<ConferenceRoom?> GetRoomByUserLoginAsync(string login)
         {
             var user = await _context.Users
                 .Include(u => u.ConferenceRoom)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.Login == login);
 
             return user?.ConferenceRoom;
         }
