@@ -142,6 +142,7 @@ namespace Server.Hubs
             string userName = Context.User?.Identity?.Name;
             if (userName is null) return;
             ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
+            if (room is null) return;
             await LeaveRoomId(room.Id);
             await base.OnDisconnectedAsync(exception);
         }
