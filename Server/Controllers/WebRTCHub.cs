@@ -140,9 +140,7 @@ namespace Server.Hubs
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             string userName = Context.User?.Identity?.Name;
-            if (userName is null) return;
             ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
-            if (room is null) return;
             await LeaveRoomId(room.Id);
 
             await base.OnDisconnectedAsync(exception);
