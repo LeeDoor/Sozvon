@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Server.Models.Data.Services;
 using SignalRApp;
+using Server.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -19,6 +20,8 @@ builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 app.UseAuthorization();
+app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -26,7 +29,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action}"
 );
-app.MapHub<ChatHub>("/chat");
 app.MapHub<WebRTCHub>("/webrtchub");
+app.MapHub<ChatHub>("/chat");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}");
+
+
 
 app.Run();
