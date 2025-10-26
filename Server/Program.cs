@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Server.Models.Data.Services;
 using SignalRApp;
 using Server.Hubs;
+using Server.Models.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -16,7 +17,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/";
         options.SlidingExpiration = true;
     });
+builder.Services.AddSingleton<ApplicationContext>();
 builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<ConferenceRoomService>();
 
 var app = builder.Build();
 app.UseAuthorization();

@@ -1,55 +1,36 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Server.Models.Data;
+using Server.Models.Data.Services;
 using System.Collections.Concurrent;
 
 namespace Server.Hubs
 {
     public class WebRTCHub : Hub
     {
-        private static readonly ConcurrentDictionary<string, Room> _rooms = new();
-        private static readonly ConcurrentDictionary<string, string> _userRooms = new();
-
-        public class Room
+        private readonly ConferenceRoomService _roomService;
+        public WebRTCHub(ConferenceRoomService roomService)
         {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public HashSet<UserInfo> Users { get; set; }
-            public int MaxUsers { get; set; }
+            _roomService = roomService;
         }
-
         public async Task<RoomInfo> CreateRoom(string roomName)
         {
-            string roomId = GenerateRoomId();
-            var room = new Room
-            {
-                Id = roomId,
-                Name = string.IsNullOrEmpty(roomName) ? "Комната " + roomId : roomName,
-                Users = new(),
-                MaxUsers = 30
-            };
-
-            _rooms[roomId] = room;
-
+            ConferenceRoom room = await _roomService.CreateRoomAsync(roomName);
             return new RoomInfo
             {
-                RoomId = roomId,
+                RoomId = room.Link,
                 RoomName = room.Name,
-                UsersCount = 0
+                UsersCount = room.Users.Count
             };
         }
-
         public async Task<JoinResult> JoinRoom(string roomId)
         {
-            if (!_rooms.TryGetValue(roomId, out Room room))
+            ConferenceRoom? room = await _roomService.GetRoomByLinkWithUsersAsync(roomId);
+            if (room is null)
             {
                 return new JoinResult { Success = false, Error = "Комната не найдена" };
             }
 
-            if (room.Users.Count >= room.MaxUsers)
-            {
-                return new JoinResult { Success = false, Error = "Комната переполнена" };
-            }
-
-            if (_userRooms.TryGetValue(Context.ConnectionId, out string previousRoomId))
+            if (_roomService.getroo _userRooms.TryGetValue(Context.ConnectionId, out string previousRoomId))
             {
                 await LeaveRoom(previousRoomId);
             }
