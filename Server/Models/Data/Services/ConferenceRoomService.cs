@@ -24,7 +24,20 @@ namespace Server.Models.Data.Services
             await _context.SaveChangesAsync();
             return room;
         }
-        
+
+        public async Task<bool> DeleteRoomAsync(ConferenceRoomId roomId)
+        {
+            var room = await _context.ConferenceRooms.FindAsync(roomId);
+
+            if (room != null)
+            {
+                _context.ConferenceRooms.Remove(room);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
 
         public async Task<ConferenceRoom?> GetRoomWithUsersAsync(ConferenceRoomId roomId)
         {
