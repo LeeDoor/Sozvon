@@ -1,0 +1,183 @@
+﻿/* videocall2.css - Стили для чата комнаты */
+#roomChatContainer {
+    width: 300px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+
+    #roomChatContainer .chat-header {
+        background: #667eea;
+        color: white;
+        padding: 12px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    #roomChatContainer .participants {
+        background: white;
+        border-bottom: 1px solid #e1e1e1;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #666;
+        flex-shrink: 0;
+    }
+
+    #roomChatContainer .chatroom {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border: none;
+        border-radius: 0;
+        margin-bottom: 0;
+    }
+
+    #roomChatContainer .input-container {
+        padding: 12px;
+        background: white;
+        border-top: 1px solid #e1e1e1;
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+        #roomChatContainer .input-container input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+            background: white;
+            color: #333;
+        }
+
+            #roomChatContainer .input-container input:focus {
+                border-color: #667eea;
+            }
+
+        #roomChatContainer .input-container button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+            #roomChatContainer .input-container button:hover:not(:disabled) {
+                background: #5a6fd8;
+            }
+
+            #roomChatContainer .input-container button:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
+
+    /* Стили сообщений в чате комнаты */
+    #roomChatContainer .message {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        max-width: 85%;
+        word-wrap: break-word;
+        font-size: 0.9em;
+    }
+
+        #roomChatContainer .message.received {
+            background: #e9ecef;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+            margin-right: 20px;
+        }
+
+        #roomChatContainer .message.sent {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+            margin-left: 20px;
+        }
+
+        #roomChatContainer .message.system {
+            background: transparent;
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            align-self: center;
+            max-width: 100%;
+            margin: 5px 0;
+        }
+
+        #roomChatContainer .message b {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 2px;
+            opacity: 0.8;
+        }
+
+    /* Прокрутка для чата */
+    #roomChatContainer .chatroom::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #roomChatContainer .chatroom::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    #roomChatContainer .chatroom::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+        #roomChatContainer .chatroom::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+    /* Анимация появления новых сообщений */
+    #roomChatContainer .message {
+        animation: messageSlideIn 0.3s ease-out;
+    }
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Состояние когда чат пуст */
+#roomChatContainer .chatroom:empty::before {
+    content: "Чат комнаты пуст";
+    color: #999;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Адаптивность для маленьких экранов */
+@media (max-width: 1200px) {
+    #roomChatContainer {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #e9ecef;
+        max-height: 300px;
+    }
+}

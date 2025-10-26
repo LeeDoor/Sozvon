@@ -9,98 +9,8 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
     <meta charset="utf-8" />
     <title>Видеокомнаты</title>
     <link rel="stylesheet" href="~/css/videocall.css">
-    <style>
-        .hidden {
-            display: none !important;
-        }
+    <link rel="stylesheet" href="~/css/videocall2.css">
 
-        .chat-container {
-            background: #1e1e1e;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            color: white;
-        }
-
-        .chat-header {
-            background: #2d2d2d;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .participants {
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        .chatroom {
-            height: 200px;
-            overflow-y: auto;
-            border: 1px solid #444;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #2a2a2a;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 10px;
-        }
-
-            .input-container input {
-                flex: 1;
-                padding: 8px;
-                border: 1px solid #444;
-                border-radius: 5px;
-                background: #2a2a2a;
-                color: white;
-            }
-
-            .input-container button {
-                padding: 8px 15px;
-                background: #007bff;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-
-                .input-container button:disabled {
-                    background: #6c757d;
-                    cursor: not-allowed;
-                }
-
-        .message {
-            margin-bottom: 8px;
-            padding: 5px;
-            border-radius: 5px;
-        }
-
-            .message.sent {
-                background: #007bff;
-                margin-left: 20px;
-            }
-
-            .message.received {
-                background: #343a40;
-                margin-right: 20px;
-            }
-
-            .message.system {
-                background: transparent;
-                color: #888;
-                font-style: italic;
-                text-align: center;
-            }
-
-            .message b {
-                margin-right: 5px;
-            }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -191,7 +101,7 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                 <div id="roomChat" class="chatroom"></div>
                 <div class="input-container">
                     <input type="text" id="roomMessage" placeholder="Введите сообщение..." />
-                    <button id="sendRoomMessageBtn" disabled>Отправить</button>
+                    <button id="sendRoomMessageBtn" disabled>></button>
                 </div>
             </div>
         </div>
@@ -469,10 +379,7 @@ ViewBag.UserName = Context?.User?.Identity?.Name ?? "Гость";
                 joinRoomBtn.disabled = false;
             });
             
-            // Обработчик синхронизации
-            syncConnectionsBtn.addEventListener('click', async () => {
-                await syncAllConnections();
-            });
+            
 
             // Переключение камеры
             toggleCameraBtn.addEventListener('click', async () => {
