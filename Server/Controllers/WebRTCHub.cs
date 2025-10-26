@@ -103,7 +103,7 @@ namespace Server.Hubs
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
                 await Clients.OthersInGroup(roomId).SendAsync("UserLeft", Context.ConnectionId);
 
-                if (room.Users.Count == 0)
+                if (room.Users.Count <= 0)
                 {
                     _rooms.TryRemove(roomId, out Room _);
                 }

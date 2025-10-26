@@ -34,7 +34,7 @@ app.MapHub<ChatHub>("/chat");
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller}/{action=Index}");
 
 app.MapFallback(async context =>
 {
