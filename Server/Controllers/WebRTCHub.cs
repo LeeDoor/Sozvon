@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using Server.Models.Data;
 using Server.Models.Data.Services;
 using System.Collections.Concurrent;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Server.Hubs
 {
@@ -10,8 +11,18 @@ namespace Server.Hubs
     {
         private readonly ConferenceRoomService _roomService;
         private readonly UserService userService;
+        public WebRTCHub(ConferenceRoomService a, UserService b)
+        {
+            _roomService = a;
+            userService = b;
+        }
         public async Task<RoomInfo> CreateRoom(string roomName)
         {
+            var username = Context.User?.Identity?.Name;
+            if (username is null) return null;
+            User? user = await userService.GetUserByLoginAsync(username);
+            if (user is null) return null;
+            if (user.ConferenceRoom is not null) return null;
             ConferenceRoom room = await _roomService.CreateRoomAsync(roomName);
             return new RoomInfo
             {
@@ -31,8 +42,9 @@ namespace Server.Hubs
             if (userId is null) return new JoinResult { Success = false };
             ConferenceRoom? previousRoom = await _roomService.GetRoomByUserLoginAsync(userId);
             if(previousRoom is not null)
-            {          
-                await LeaveRoom(previousRoom.Id);
+            {
+                if (previousRoom.Link == roomId) return new JoinResult { Success = false };
+                await LeaveRoomId(previousRoom.Id);
             }
 
             string? userName = Context.User?.Identity?.Name ?? Context.ConnectionId.Substring(0, 8);
@@ -41,7 +53,9 @@ namespace Server.Hubs
                 UserId = Context.ConnectionId,
                 UserName = userName
             };
-
+            var user = await userService.GetUserByLoginAsync(userId);
+            user.ConferenceRoom = room;
+            room.Users.Add(user);
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
             // Уведомляем всех в комнате о новом пользователе
@@ -68,8 +82,8 @@ namespace Server.Hubs
                 }).ToList()
             };
         }
-
-        public async Task LeaveRoom(ConferenceRoomId roomId)
+        public async Task LeaveRoom(string roomId) => await LeaveRoomId((await _roomService.GetRoomByLinkAsync(roomId)).Id);
+        public async Task LeaveRoomId(ConferenceRoomId roomId)
         {
             string userName = Context.User?.Identity?.Name;
             ConferenceRoom? room = await _roomService.GetRoomByIdAsync(roomId);
@@ -77,6 +91,8 @@ namespace Server.Hubs
             {
                 await _roomService.RemoveUserFromRoomAsync(roomId);
 
+                var user = await userService.GetUserByLoginAsync(userName);
+                user.ConferenceRoom = null;
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Link);
                 await Clients.OthersInGroup(room.Link).SendAsync("UserLeft", userName);
 
@@ -111,7 +127,7 @@ namespace Server.Hubs
         {
             string userName = Context.User?.Identity?.Name;
             ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
-            {
+            if(room is not null){
                 await Clients.OthersInGroup(room.Link).SendAsync("UserMediaUpdated", new
                 {
                     UserId = Context.ConnectionId,
@@ -125,7 +141,7 @@ namespace Server.Hubs
         {
             string userName = Context.User?.Identity?.Name;
             ConferenceRoom? room = await _roomService.GetRoomByUserLoginAsync(userName);
-            await LeaveRoom(room.Id);
+            await LeaveRoomId(room.Id);
 
             await base.OnDisconnectedAsync(exception);
         }
