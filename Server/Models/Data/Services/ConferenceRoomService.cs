@@ -24,6 +24,7 @@ namespace Server.Models.Data.Services
             await _context.SaveChangesAsync();
             return room;
         }
+        
 
         public async Task<ConferenceRoom?> GetRoomWithUsersAsync(ConferenceRoomId roomId)
         {
@@ -43,9 +44,34 @@ namespace Server.Models.Data.Services
             }
         }
 
+        public async Task<ConferenceRoom?> GetRoomByIdAsync(ConferenceRoomId roomId)
+        {
+            return await _context.ConferenceRooms
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+        }
+
+        public async Task<ConferenceRoom?> GetRoomByIdWithUsersAsync(ConferenceRoomId roomId)
+        {
+            return await _context.ConferenceRooms
+                .Include(r => r.Users)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+        }
+
+        public async Task<ConferenceRoom?> GetRoomByLinkAsync(string link)
+        {
+            return await _context.ConferenceRooms
+                .FirstOrDefaultAsync(r => r.Link == link && r.IsActive);
+        }
+
+        public async Task<ConferenceRoom?> GetRoomByLinkWithUsersAsync(string link)
+        {
+            return await _context.ConferenceRooms
+                .Include(r => r.Users)
+                .FirstOrDefaultAsync(r => r.Link == link && r.IsActive);
+        }
         private static string GenerateRoomLink()
         {
-            return Guid.NewGuid().ToString("N")[..10];
+            return Guid.NewGuid().ToString("N")[..5];
         }
     }
 }
