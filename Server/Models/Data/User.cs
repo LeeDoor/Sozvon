@@ -16,8 +16,14 @@ namespace Server.Models.Data
         [Required]
         public string Password { get; set; }
 
+        public DateTime RegistrationTime { get; set; }
         public ConferenceRoomId? ConferenceRoomId { get; set; }
         [ForeignKey(nameof(ConferenceRoomId))]
         public ConferenceRoom? ConferenceRoom { get; set; }
+
+        public User()
+        {
+            RegistrationTime = DateTime.UtcNow;
+        }
     }
 }
